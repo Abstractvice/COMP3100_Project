@@ -10,7 +10,7 @@ public class SocketServer{
 	// Here is our static ServerSocket variable
     private static ServerSocket server;
     // Here is our socket server port on which it will listen
-    private static int port = 6005;
+    private static int port = 50000;
     
     public static void main(String args[]) throws IOException, ClassNotFoundException {
     	// Create the socket server object

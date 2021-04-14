@@ -7,50 +7,57 @@ import java.net.Socket;
 // How to run: Section 7 of ds-sim guide
 // 		./ds-server -n -c ds-sample-config01.xml -v all
 
+// Gross, get rid of all the statics at some point
+
 public class SocketClient {
 	
-/*	Socket socket;
-	InputStreamReader in;
-	BufferedReader bf;
-	PrintWriter pr = null;
+	static Socket socket;
+	static InputStreamReader in;
+	static BufferedReader bf;
 	
-	public clientConstructor(String IP, int port) {
+	static PrintWriter pr;
+	
+/*	public clientConstructor(String IP, int port) {
 
 	}	
 	
 	// we want to have a method for both sending and receiving messages so that we don't have
 	// a long list of instructions in our main
+	 * 
+	 * */
 	
-	public void send(String s) {
+	public static void send(String s) {
+		pr.println(s);
+		pr.flush();
 		
 	}
 	
-	public String receive() {
+	// May have to use try/catch
+	public static String receive() throws IOException {
 		
-	} */
+		return "";
+		
+	}
+	
 	
 	public static void main(String[] args) throws IOException {
-		Socket s = new Socket("Localhost", 50000);
+		socket = new Socket("Localhost", 50000);
 		
-		PrintWriter pr = new PrintWriter(s.getOutputStream());
-		
-		pr.println("HELO");
-		pr.flush();
-		
-		InputStreamReader in = new InputStreamReader(s.getInputStream());
+		pr = new PrintWriter(socket.getOutputStream());
+		in = new InputStreamReader(socket.getInputStream());
 		BufferedReader bf = new BufferedReader(in);
+		
+		send("HELO");
 		
 		String str = bf.readLine();
 		System.out.println("server: "+ str);
 		
-		pr.println("AUTH xxx");
-		pr.flush();
+		send("AUTH xxx");
 		
 		str = bf.readLine();
 		System.out.println("server: "+ str);
 		
-		pr.println("REDY");
-		pr.flush();
+		send("REDY");
 		
 		str = bf.readLine();
 		System.out.println("server: " + str);	
