@@ -3,45 +3,44 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 // How to run: Section 7 of ds-sim guide
 // 		./ds-server -n -c ds-sample-config01.xml -v all
 
-// Gross, get rid of all the statics at some point
 
 public class SocketClient {
 	
-	static Socket socket;
-	static InputStreamReader in;
-	static BufferedReader bf;
+	public static void main(String[] args) throws UnknownHostException, IOException {
+		SocketClient socketClient = new SocketClient("Localhost", 50000);
+		socketClient.actualProgram();
+	}
 	
-	static PrintWriter pr;
+	private Socket socket;
+	private InputStreamReader in;
+	private BufferedReader bf;
 	
-/*	public clientConstructor(String IP, int port) {
-
+	private PrintWriter pr;
+	
+	public SocketClient(String IP, int port) throws UnknownHostException, IOException {
+		socket = new Socket(IP, port);
 	}	
 	
-	// we want to have a method for both sending and receiving messages so that we don't have
-	// a long list of instructions in our main
-	 * 
-	 * */
-	
-	public static void send(String s) {
+	public void send(String s) {
 		pr.println(s);
 		pr.flush();
 		
 	}
 	
 	// May have to use try/catch
-	public static String receive() throws IOException {
+	public String receive() throws IOException {
 		
 		return "";
 		
 	}
 	
-	
-	public static void main(String[] args) throws IOException {
-		socket = new Socket("Localhost", 50000);
+	public void actualProgram() throws UnknownHostException, IOException {
+		//socket = new Socket("Localhost", 50000);
 		
 		pr = new PrintWriter(socket.getOutputStream());
 		in = new InputStreamReader(socket.getInputStream());
@@ -62,4 +61,6 @@ public class SocketClient {
 		str = bf.readLine();
 		System.out.println("server: " + str);	
 	}
+	
+
 }
