@@ -4,7 +4,30 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+// How to run: Section 7 of ds-sim guide
+// 		./ds-server -n -c ds-sample-config01.xml -v all
+
 public class SocketClient {
+	
+/*	Socket socket;
+	InputStreamReader in;
+	BufferedReader bf;
+	PrintWriter pr = null;
+	
+	public clientConstructor(String IP, int port) {
+
+	}	
+	
+	// we want to have a method for both sending and receiving messages so that we don't have
+	// a long list of instructions in our main
+	
+	public void send(String s) {
+		
+	}
+	
+	public String receive() {
+		
+	} */
 	
 	public static void main(String[] args) throws IOException {
 		Socket s = new Socket("Localhost", 50000);
