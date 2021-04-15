@@ -8,50 +8,45 @@ import java.net.UnknownHostException;
 // How to run: Section 7 of ds-sim guide
 // 		./ds-server -n -c ds-sample-config01.xml -v all
 
+// https://stackoverflow.com/questions/428073/what-is-the-best-simplest-way-to-read-in-an-xml-file-in-java-application
+
+import java.io.File;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+
 
 public class SocketClient {
 	
+	private Socket socket;
+	private PrintWriter pr;
+	private InputStreamReader in;	
+	private BufferedReader bf;	
+	
 	public static void main(String[] args) throws UnknownHostException, IOException {
 		SocketClient socketClient = new SocketClient("Localhost", 50000);
-		socketClient.actualProgram();
+		socketClient.run();
 	}
-	
-	private Socket socket;
-	private InputStreamReader in;
-	private BufferedReader bf;
-	
-	private PrintWriter pr;
 	
 	public SocketClient(String IP, int port) throws UnknownHostException, IOException {
 		socket = new Socket(IP, port);
-	}	
-	
-	public void send(String s) {
-		pr.println(s);
-		pr.flush();
-		
-	}
-	
-	// May have to use try/catch
-	public String receive() throws IOException {
-		
-		return "";
-		
-	}
-	
-	public void actualProgram() throws UnknownHostException, IOException {
-		//socket = new Socket("Localhost", 50000);
-		
 		pr = new PrintWriter(socket.getOutputStream());
 		in = new InputStreamReader(socket.getInputStream());
-		BufferedReader bf = new BufferedReader(in);
+		bf = new BufferedReader(in);			
+	}
+		
+	public void run() throws IOException {
+		
+
+	
 		
 		send("HELO");
 		
 		String str = bf.readLine();
 		System.out.println("server: "+ str);
 		
-		send("AUTH xxx");
+		// from announcements forum
+		send("AUTH " + System.getProperty("user.name"));
 		
 		str = bf.readLine();
 		System.out.println("server: "+ str);
@@ -60,7 +55,55 @@ public class SocketClient {
 		
 		str = bf.readLine();
 		System.out.println("server: " + str);	
+		
 	}
+	
+	public String receive(String str) throws IOException {
+		
+		return "";
+		
+	}
+	
+/*	public void run() throws UnknownHostException, IOException {
+		//socket = new Socket("Localhost", 50000);
+		
+		pr = new PrintWriter(socket.getOutputStream());
+		in = new InputStreamReader(socket.getInputStream());
+		BufferedReader bf = new BufferedReader(in);
+		
+		
+		send("HELO");
+		
+		String str = bf.readLine();
+		System.out.println("server: "+ str);
+		
+		// from announcements forum
+		send("AUTH " + System.getProperty("user.name"));
+		
+		str = bf.readLine();
+		System.out.println("server: "+ str);
+		
+		send("REDY");
+		
+		str = bf.readLine();
+		System.out.println("server: " + str);	
+	} */
+	
+
+	// Constructor
+
+	
+	// Sends messages to the server
+	public void send(String s) {
+		pr.println(s);
+		pr.flush();
+		
+	}
+	
+	// Receives messages
+
+	
+
 	
 
 }
