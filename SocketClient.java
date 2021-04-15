@@ -36,10 +36,7 @@ public class SocketClient {
 	}
 		
 	public void run() throws IOException {
-		
-
 	
-		
 		send("HELO");
 		
 		String str = bf.readLine();
@@ -64,46 +61,11 @@ public class SocketClient {
 		
 	}
 	
-/*	public void run() throws UnknownHostException, IOException {
-		//socket = new Socket("Localhost", 50000);
-		
-		pr = new PrintWriter(socket.getOutputStream());
-		in = new InputStreamReader(socket.getInputStream());
-		BufferedReader bf = new BufferedReader(in);
-		
-		
-		send("HELO");
-		
-		String str = bf.readLine();
-		System.out.println("server: "+ str);
-		
-		// from announcements forum
-		send("AUTH " + System.getProperty("user.name"));
-		
-		str = bf.readLine();
-		System.out.println("server: "+ str);
-		
-		send("REDY");
-		
-		str = bf.readLine();
-		System.out.println("server: " + str);	
-	} */
-	
-
-	// Constructor
-
-	
 	// Sends messages to the server
 	public void send(String s) {
 		pr.println(s);
 		pr.flush();
 		
 	}
-	
-	// Receives messages
-
-	
-
-	
 
 }
