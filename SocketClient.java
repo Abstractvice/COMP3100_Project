@@ -35,31 +35,43 @@ public class SocketClient {
 		bf = new BufferedReader(in);			
 	}
 		
+	public String receive(String str) throws IOException {
+		
+		return "";
+		
+	}	
+	
 	public void run() throws IOException {
 	
 		send("HELO");
 		
+		// ok
 		String str = bf.readLine();
 		System.out.println("server: "+ str);
 		
 		// from announcements forum
 		send("AUTH " + System.getProperty("user.name"));
 		
+		// ok
 		str = bf.readLine();
 		System.out.println("server: "+ str);
 		
 		send("REDY");
 		
+		// sends JOB
 		str = bf.readLine();
-		System.out.println("server: " + str);	
+		//System.out.println("server: " + str);	
+		
+		if (str.equals("NONE"))
+			send("QUIT");
+		
+		// quit
+		str = bf.readLine();
+		System.out.println("server: "+ str);
 		
 	}
 	
-	public String receive(String str) throws IOException {
-		
-		return "";
-		
-	}
+
 	
 	// Sends messages to the server
 	public void send(String s) {
