@@ -10,8 +10,10 @@ import java.net.UnknownHostException;
  https://stackoverflow.com/questions/428073/what-is-the-best-simplest-way-to-read-in-an-xml-file-in-java-application
 
  Things to do:
-	- Extract all the information from the xml files and store it here
+	- Extract all the information from the xml files and store it here.
+		- Only need to extract server information?
 	- The largest server type in an xml file has the largest coreCount value.
+	- Make a separate class for server data structure. Like C struct????
 */
 
 import java.io.File;
@@ -30,8 +32,59 @@ public class SocketClient {
 	private BufferedReader bf;	
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {
-		SocketClient socketClient = new SocketClient("Localhost", 50000);
-		socketClient.run();
+		// TODO Auto-generated method stub
+		SocketClient client = new SocketClient("Localhost", 50000);
+		
+		// Step 1
+		client.send("HELO");
+		
+		// Step 2
+		client.receive();
+		
+		// Step 3
+		client.send("AUTH " + System.getProperty("user.name"));
+		
+		// Step 4
+		client.receive();
+		
+		// Step 4.5: Figure out what goes here
+		client.readXML("file");
+		
+		// Step 5
+		client.send("REDY");
+		
+		// Step 6
+		String str = client.receive();
+		
+		//String[] jobs = new String[7];
+		
+		boolean looping = true;
+		
+		// JOBN 37 0 653 3 700 3800
+		
+		client.send("QUIT"); 
+		
+
+		
+		// Step 7 - Client sends SCHD: The scheduling decision
+		
+		
+		// Step 8 - Server sends "OK": action succesfully done
+		
+		// Step 9 - Client sends "OK" or "REDY"????
+		
+		// Step 10 - Server sends something
+		
+		// Step 11 - Client does something
+		
+		// Step 12 - Client sends quit
+		client.receive();
+//		System.out.println("server: "+ str);
+		
+		// Step 13 - Server sends Quit
+		
+		// Step 14 - Client quits
+		
 	}
 	
 	public SocketClient(String IP, int port) throws UnknownHostException, IOException {
@@ -40,16 +93,12 @@ public class SocketClient {
 		in = new InputStreamReader(socket.getInputStream());
 		bf = new BufferedReader(in);			
 	}
-		
-	public String receive(String str) throws IOException {
-		
-		return "";
-		
-	}	
 	
 	private String[][] Servers;
+	private int largestServer = 0; // Stores the position of the largest server in the 2D array
 	
 	// https://www.javatpoint.com/how-to-read-xml-file-in-java
+	// Parses the XML file and determines which server is the largest
 	public void readXML(String XMLFile) {
 		try {
 			// Here we are creating a constructor of file class that parses an XML file
@@ -66,6 +115,7 @@ public class SocketClient {
 			NodeList nodeList = doc.getElementsByTagName("server");
 			
 			Servers = new String[nodeList.getLength()][7];
+			int coreCount = 0;
 			
 			for (int i = 0; i < nodeList.getLength(); i++) {
 				// Node node = nodeList.item(i);
@@ -78,11 +128,25 @@ public class SocketClient {
 				Servers[i][4] = eElement.getAttribute("coreCount");
 				Servers[i][5] = eElement.getAttribute("memory");
 				Servers[i][6] = eElement.getAttribute("disk");
+				
+				if (Integer.parseInt(eElement.getAttribute("coreCount")) > coreCount) {
+					coreCount = Integer.parseInt(eElement.getAttribute("coreCount"));
+					largestServer = i;
+				}
+				
 			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	// private boolean looping;
+	
+	public String receive() throws IOException {
+		
+		return bf.readLine();
+		
 	}
 	
 	public void run() throws IOException {
@@ -91,33 +155,57 @@ public class SocketClient {
 		send("HELO");
 		
 		// Step 2
-		String str = bf.readLine();
-		System.out.println("server: "+ str);
+		receive();
+		//System.out.println("server: "+ str);
 		
 		// Step 3
 		send("AUTH " + System.getProperty("user.name"));
 		
 		// Step 4: Need to read xml, call readXML() or something and prescribe them to values
 		// inside of a data structure (most likely just an array)
-		str = bf.readLine();
-		System.out.println("server: "+ str);
+		receive();
+		//System.out.println("server: "+ str);
+		
+		// Step 4.5: Figure out what needs to go here
+		readXML("file");
 		
 		// Step 5
 		send("REDY");
 		
 		
-		// Step 6
-		str = bf.readLine();
-		System.out.println("server: " + str);	
+		// Step 6: Server sends JOB data
+		String str = receive();
+		//System.out.println("server: " + str);	
 		
-		if (str.equals("NONE"))
-			send("QUIT");
+		//String[] jobs = new String[7];
 		
-		// Step 7 - Client sends something
 		
-		// Step 8 - Server sends something
+		boolean looping = true;
 		
-		// Step 9 - Client does something
+		// JOBN 37 0 653 3 700 3800
+		
+		// While str != NONE, we loop through the jobs given by server
+/*		if (!str.equals("NONE")) {
+			while (looping) {
+				if (str.equals("OK")) {
+					send("REDY");
+					str = bf.readLine();
+				}
+				if (str.equals("NONE")) {
+					break;
+				}
+			}
+		} */
+		send("QUIT"); 
+		
+
+		
+		// Step 7 - Client sends SCHD: The scheduling decision
+		
+		
+		// Step 8 - Server sends "OK": action succesfully done
+		
+		// Step 9 - Client sends "OK" or "REDY"????
 		
 		// Step 10 - Server sends something
 		
