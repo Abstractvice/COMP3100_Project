@@ -4,6 +4,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 /* How to run: Section 7 of ds-sim guide
  		./ds-server -n -c ds-sample-config01.xml -v all
@@ -23,6 +24,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+//import SocketClient.Server;
+
 
 public class SocketClient {
 	
@@ -30,6 +33,28 @@ public class SocketClient {
 	private PrintWriter pr;
 	private InputStreamReader in;	
 	private BufferedReader bf;	
+	
+	private class Server {
+		public String type;
+		public int limit;
+		public int bootupTime;
+		public float hourlyRate;
+		public int coreCount;
+		public int memory;
+		public int disk;
+		
+		// Constructor
+		private Server(String t, int l, int bT, float hR, int cC, int m, int d) {
+			this.type = t;
+			this.limit = l;
+			this.bootupTime = bT;
+			this.hourlyRate = hR;
+			this.coreCount = cC;
+			this.memory = m;
+			this.disk = d;
+		}
+		
+	}
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {
 		// TODO Auto-generated method stub
@@ -64,19 +89,6 @@ public class SocketClient {
 		
 		client.send("QUIT"); 
 		
-
-		
-		// Step 7 - Client sends SCHD: The scheduling decision
-		
-		
-		// Step 8 - Server sends "OK": action succesfully done
-		
-		// Step 9 - Client sends "OK" or "REDY"????
-		
-		// Step 10 - Server sends something
-		
-		// Step 11 - Client does something
-		
 		// Step 12 - Client sends quit
 		client.receive();
 //		System.out.println("server: "+ str);
@@ -94,8 +106,10 @@ public class SocketClient {
 		bf = new BufferedReader(in);			
 	}
 	
-	private String[][] Servers;
+	//private String[][] Servers;
 	private int largestServer = 0; // Stores the position of the largest server in the 2D array
+	
+	private ArrayList<Server> allServers = new ArrayList<Server>();
 	
 	// https://www.javatpoint.com/how-to-read-xml-file-in-java
 	// Parses the XML file and determines which server is the largest
@@ -114,20 +128,21 @@ public class SocketClient {
 			
 			NodeList nodeList = doc.getElementsByTagName("server");
 			
-			Servers = new String[nodeList.getLength()][7];
 			int coreCount = 0;
 			
 			for (int i = 0; i < nodeList.getLength(); i++) {
 				// Node node = nodeList.item(i);
 				Element eElement = (Element)nodeList.item(i); // What does this do?
 				
-				Servers[i][0] = eElement.getAttribute("type");
-				Servers[i][1] = eElement.getAttribute("limit");
-				Servers[i][2] = eElement.getAttribute("bootupTime");
-				Servers[i][3] = eElement.getAttribute("hourlyRate");
-				Servers[i][4] = eElement.getAttribute("coreCount");
-				Servers[i][5] = eElement.getAttribute("memory");
-				Servers[i][6] = eElement.getAttribute("disk");
+				String t = eElement.getAttribute("type");
+				int l = Integer.parseInt(eElement.getAttribute("limit"));
+				int bT = Integer.parseInt(eElement.getAttribute("bootupTime"));
+				float hR = Float.parseFloat(eElement.getAttribute("hourlyRate"));
+				int cC = Integer.parseInt(eElement.getAttribute("coreCount"));
+				int m = Integer.parseInt(eElement.getAttribute("memory"));
+				int d = Integer.parseInt(eElement.getAttribute("disk"));
+				
+				allServers.add(new Server(t, l, bT, hR, cC, m, d));
 				
 				if (Integer.parseInt(eElement.getAttribute("coreCount")) > coreCount) {
 					coreCount = Integer.parseInt(eElement.getAttribute("coreCount"));
