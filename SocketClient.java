@@ -73,7 +73,7 @@ public class SocketClient {
 		client.receive();
 		
 		// Step 4.5: Figure out what goes here
-		client.readXML("file");
+		client.readXML("ds-sample-config01.xml");
 		
 		// Step 5
 		client.send("REDY");
@@ -148,6 +148,8 @@ public class SocketClient {
 					coreCount = Integer.parseInt(eElement.getAttribute("coreCount"));
 					largestServer = i;
 				}
+				
+				System.out.print(coreCount);
 				
 			}
 		}
