@@ -35,16 +35,15 @@ public class SocketClient {
 	private BufferedReader bf;	
 	
 	private class Server {
-		public String type;
-		public int limit;
-		public int bootupTime;
-		public float hourlyRate;
-		public int coreCount;
-		public int memory;
-		public int disk;
+		String type;
+		int limit;
+		int bootupTime;
+		float hourlyRate;
+		int coreCount;
+		int memory;
+		int disk;
 		
-		// Constructor
-		private Server(String t, int l, int bT, float hR, int cC, int m, int d) {
+		Server(String t, int l, int bT, float hR, int cC, int m, int d) {
 			this.type = t;
 			this.limit = l;
 			this.bootupTime = bT;
@@ -54,6 +53,24 @@ public class SocketClient {
 			this.disk = d;
 		}
 		
+	}
+	
+	private class Job {
+		int submitTime;
+		int jobID;
+		int estRuntime;
+		int cores;
+		int memory;
+		int disk;
+		
+		Job(int sT, int jID, int eR, int c, int m, int d) {
+			this.submitTime = sT;
+			this.jobID = jID;
+			this.estRuntime = eR;
+			this.cores = c;
+			this.memory = m;
+			this.disk = d;
+		}
 	}
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {
@@ -111,6 +128,7 @@ public class SocketClient {
 	
 	private ArrayList<Server> allServers = new ArrayList<Server>();
 	
+	
 	// https://www.javatpoint.com/how-to-read-xml-file-in-java
 	// Parses the XML file and determines which server is the largest
 	public void readXML(String XMLFile) {
@@ -126,13 +144,13 @@ public class SocketClient {
 			Document doc = db.parse(file);
 			doc.getDocumentElement().normalize();
 			
-			NodeList nodeList = doc.getElementsByTagName("server");
+			NodeList nodeListServer = doc.getElementsByTagName("server");
 			
 			int coreCount = 0;
 			
-			for (int i = 0; i < nodeList.getLength(); i++) {
+			for (int i = 0; i < nodeListServer.getLength(); i++) {
 				// Node node = nodeList.item(i);
-				Element eElement = (Element)nodeList.item(i); // What does this do?
+				Element eElement = (Element)nodeListServer.item(i); // What does this do?
 				
 				String t = eElement.getAttribute("type");
 				int l = Integer.parseInt(eElement.getAttribute("limit"));
@@ -152,6 +170,9 @@ public class SocketClient {
 				System.out.print(coreCount);
 				
 			}
+			
+			
+			
 		}
 		catch (Exception e) {
 			e.printStackTrace();
