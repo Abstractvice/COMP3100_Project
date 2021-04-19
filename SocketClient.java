@@ -6,15 +6,16 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+// ./tests1.sh MyClient.class -n
+
 /* How to run: Section 7 of ds-sim guide
  		./ds-server -n -c ds-sample-config01.xml -v all
  https://stackoverflow.com/questions/428073/what-is-the-best-simplest-way-to-read-in-an-xml-file-in-java-application
 
  Things to do:
-	- Extract all the information from the xml files and store it here.
-		- Only need to extract server information?
-	- The largest server type in an xml file has the largest coreCount value.
-	- Make a separate class for server data structure. Like C struct????
+	- Change  as many -throws- into -try/catch- as possible
+	- Use dataInputStream and dataOutputStream instead of PrintWriter and InputStreamReader if
+		problems arise.
 */
 
 import java.io.File;
@@ -26,7 +27,6 @@ import org.w3c.dom.NodeList;
 
 //import SocketClient.Server;
 
-
 public class SocketClient {
 	
 	private Socket socket;
@@ -34,14 +34,19 @@ public class SocketClient {
 	private InputStreamReader in;	
 	private BufferedReader bf;	
 	
+	private int largestServer = 0; // Stores the position of the largest server in the 2D array
+	
+	private ArrayList<Server> allServers = new ArrayList<Server>();
+	private ArrayList<Job> allJobs = new ArrayList<Job>();
+	
 	private class Server {
-		String type;
-		int limit;
-		int bootupTime;
-		float hourlyRate;
-		int coreCount;
-		int memory;
-		int disk;
+		public String type;
+		public int limit;
+		public int bootupTime;
+		public float hourlyRate;
+		public int coreCount;
+		public int memory;
+		public int disk;
 		
 		Server(String t, int l, int bT, float hR, int cC, int m, int d) {
 			this.type = t;
@@ -73,48 +78,7 @@ public class SocketClient {
 		}
 	}
 	
-	public static void main(String[] args) throws UnknownHostException, IOException {
-		// TODO Auto-generated method stub
-		SocketClient client = new SocketClient("Localhost", 50000);
-		
-		// Step 1
-		client.send("HELO");
-		
-		// Step 2
-		client.receive();
-		
-		// Step 3
-		client.send("AUTH " + System.getProperty("user.name"));
-		
-		// Step 4
-		client.receive();
-		
-		// Step 4.5: Figure out what goes here
-		client.readXML("ds-sample-config01.xml");
-		
-		// Step 5
-		client.send("REDY");
-		
-		// Step 6
-		String str = client.receive();
-		
-		//String[] jobs = new String[7];
-		
-		boolean looping = true;
-		
-		// JOBN 37 0 653 3 700 3800
-		
-		client.send("QUIT"); 
-		
-		// Step 12 - Client sends quit
-		client.receive();
-//		System.out.println("server: "+ str);
-		
-		// Step 13 - Server sends Quit
-		
-		// Step 14 - Client quits
-		
-	}
+	//-----------------------------
 	
 	public SocketClient(String IP, int port) throws UnknownHostException, IOException {
 		socket = new Socket(IP, port);
@@ -122,12 +86,6 @@ public class SocketClient {
 		in = new InputStreamReader(socket.getInputStream());
 		bf = new BufferedReader(in);			
 	}
-	
-	//private String[][] Servers;
-	private int largestServer = 0; // Stores the position of the largest server in the 2D array
-	
-	private ArrayList<Server> allServers = new ArrayList<Server>();
-	
 	
 	// https://www.javatpoint.com/how-to-read-xml-file-in-java
 	// Parses the XML file and determines which server is the largest
@@ -145,6 +103,7 @@ public class SocketClient {
 			doc.getDocumentElement().normalize();
 			
 			NodeList nodeListServer = doc.getElementsByTagName("server");
+			//NodeList nodeListJob = doc.getElementsByTagName("job");
 			
 			int coreCount = 0;
 			
@@ -167,32 +126,50 @@ public class SocketClient {
 					largestServer = i;
 				}
 				
-				System.out.print(coreCount);
+				//System.out.print(coreCount);
 				
 			}
-			
-			
 			
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	// private boolean looping;
+	}	
 	
 	public String receive() throws IOException {
-		
 		return bf.readLine();
-		
 	}
 
-	
 	// Sends messages to the server
 	public void send(String s) {
 		pr.println(s);
 		pr.flush();
+	}
+	
+	public static void main(String[] args) throws UnknownHostException, IOException {
+		SocketClient client = new SocketClient("Localhost", 50000);
+		
+		client.send("HELO");
+		client.receive();
+		client.send("AUTH " + System.getProperty("user.name"));
+		client.receive();
+		client.readXML("system.xml");
+		client.send("REDY");
+		
+		// Step 6: Receives job schedule or "NONE"
+		String str = client.receive();
+		
+
+		
+		client.send("QUIT"); 
+		
+		// Step 12 - Client sends quit
+		client.receive();
+//		System.out.println("server: "+ str);
+		
+		// Step 13 - Server sends Quit
+		
+		// Step 14 - Client quits
 		
 	}
-
 }
