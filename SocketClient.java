@@ -6,16 +6,18 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
-// ./tests1.sh MyClient.class -n
+// ./tests1.sh SocketClient.class -n
 
 /* How to run: Section 7 of ds-sim guide
  		./ds-server -n -c ds-sample-config01.xml -v all
  https://stackoverflow.com/questions/428073/what-is-the-best-simplest-way-to-read-in-an-xml-file-in-java-application
 
- Things to do:
+ Things to do/take into account:
 	- Change  as many -throws- into -try/catch- as possible
 	- Use dataInputStream and dataOutputStream instead of PrintWriter and InputStreamReader if
 		problems arise.
+	- Figure out WTF is up with newlines
+	- Include general error messages
 */
 
 import java.io.File;
@@ -34,6 +36,7 @@ public class SocketClient {
 	private InputStreamReader in;	
 	private BufferedReader bf;	
 	
+	// This contains the index of the largest server stored in allServers
 	private int largestServer = 0; // Stores the position of the largest server in the 2D array
 	
 	private ArrayList<Server> allServers = new ArrayList<Server>();
@@ -100,7 +103,7 @@ public class SocketClient {
 			// Here is an instance of builder to parse the specified xml file
 			DocumentBuilder db = dbf.newDocumentBuilder();
 			Document doc = db.parse(file);
-			doc.getDocumentElement().normalize();
+			doc.getDocumentElement().normalize(); // What does this do?
 			
 			NodeList nodeListServer = doc.getElementsByTagName("server");
 			//NodeList nodeListJob = doc.getElementsByTagName("job");
@@ -153,12 +156,31 @@ public class SocketClient {
 		client.receive();
 		client.send("AUTH " + System.getProperty("user.name"));
 		client.receive();
-		client.readXML("system.xml");
+		client.readXML("ds-system.xml");
 		client.send("REDY");
 		
 		// Step 6: Receives job schedule or "NONE"
 		String str = client.receive();
 		
+		boolean looping = true;
+		
+		// Continues while connection is open
+		if (!str.equals("NONE")) {
+			while (looping) {
+				if (str.equals("NONE")) {
+					looping = false;
+					break;
+				}				
+				if (str.equals("OK")) {
+					client.send("REDY");
+					str = client.receive();
+				}
+				String[] jobData = str.split("\\s+");
+				int jobCount = Integer.parseInt(jobData[2]);
+				client.send("SCHD " + jobCount + " " + client.allServers.get(client.largestServer).type + " " + 0);
+			}
+			
+		}
 
 		
 		client.send("QUIT"); 
