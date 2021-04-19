@@ -51,6 +51,10 @@ public class SocketClient {
 		public int memory;
 		public int disk;
 		
+		String getType() {
+			return type;
+		}
+		
 		Server(String t, int l, int bT, float hR, int cC, int m, int d) {
 			this.type = t;
 			this.limit = l;
@@ -83,11 +87,15 @@ public class SocketClient {
 	
 	//-----------------------------
 	
-	public SocketClient(String IP, int port) throws UnknownHostException, IOException {
-		socket = new Socket(IP, port);
-		pr = new PrintWriter(socket.getOutputStream());
-		in = new InputStreamReader(socket.getInputStream());
-		bf = new BufferedReader(in);			
+	public SocketClient(String IP, int port) {
+		try {
+			socket = new Socket(IP, port);
+			pr = new PrintWriter(socket.getOutputStream());
+			in = new InputStreamReader(socket.getInputStream());
+			bf = new BufferedReader(in);
+		} catch (Exception e) {
+			System.out.print("Error: No Client!");
+		}
 	}
 	
 	// https://www.javatpoint.com/how-to-read-xml-file-in-java
@@ -139,11 +147,17 @@ public class SocketClient {
 		}
 	}	
 	
-	public String receive() throws IOException {
-		return bf.readLine();
+	public String receive() {
+		String message = "";
+		try {
+			message = bf.readLine();
+		} catch (Exception e) {
+			System.out.print("Error in receiving message!");
+		}
+		return message;
 	}
 
-	// Sends messages to the server
+	// *** error message?
 	public void send(String s) {
 		pr.println(s);
 		pr.flush();
@@ -181,23 +195,18 @@ public class SocketClient {
 				
 				// Example: 	SCHD 	jobID 	serverType 	serverID
 				//				SCHD 	3 		Joon 		1
-				String[] jobData = str.split("\\s+");
-				int jobCount = Integer.parseInt(jobData[2]);
-				client.send("SCHD " + jobCount + " " + client.allServers.get(client.largestServer).type + " " + 0);
+				String[] jobInfo = str.split("\\s+");
+				int numOfJobs = Integer.parseInt(jobInfo[2]);
+				client.send("SCHD " + numOfJobs + " " + client.allServers.get(client.largestServer).type + " " + 0);
 			}
 			
 		}
-
+		
 		
 		client.send("QUIT"); 
 		
-		// Step 12 - Client sends quit
 		client.receive();
-//		System.out.println("server: "+ str);
-		
-		// Step 13 - Server sends Quit
-		
-		// Step 14 - Client quits
+		client.socket.close();
 		
 	}
 }
