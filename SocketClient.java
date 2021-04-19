@@ -170,11 +170,17 @@ public class SocketClient {
 				if (str.equals("NONE")) {
 					looping = false;
 					break;
-				}				
+				}			
+				// Server sends job informtion
 				if (str.equals("OK")) {
 					client.send("REDY");
 					str = client.receive();
 				}
+				
+				// [JOBN][submitTime][jobID][estRuntime][core][memory][disk]
+				
+				// Example: 	SCHD 	jobID 	serverType 	serverID
+				//				SCHD 	3 		Joon 		1
 				String[] jobData = str.split("\\s+");
 				int jobCount = Integer.parseInt(jobData[2]);
 				client.send("SCHD " + jobCount + " " + client.allServers.get(client.largestServer).type + " " + 0);
