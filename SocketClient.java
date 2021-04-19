@@ -197,7 +197,7 @@ public class SocketClient {
 				//				SCHD 	3 		Joon 		1
 				String[] jobInfo = str.split("\\s+");
 				int numOfJobs = Integer.parseInt(jobInfo[2]);
-				client.send("SCHD " + numOfJobs + " " + client.allServers.get(client.largestServer).type + " " + 0);
+				client.send("SCHD " + numOfJobs + " " + client.allServers.get(client.largestServer).getType() + " " + "0");
 			}
 			
 		}
