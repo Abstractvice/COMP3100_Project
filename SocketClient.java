@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,12 +32,9 @@ import org.w3c.dom.NodeList;
 
 public class SocketClient {
 	
+	private Socket socket;	
 	private DataOutputStream out;
-	
-	private Socket socket;
-	//private PrintWriter pr;
-	private InputStreamReader in;	
-	private BufferedReader bf;	
+	private DataInputStream in;	
 	
 	private class Server {
 		public String type;
@@ -92,31 +90,19 @@ public class SocketClient {
 	public SocketClient(String IP, int port) {
 		try {
 			socket = new Socket(IP, port);
-			//pr = new PrintWriter(socket.getOutputStream());
 			out = new DataOutputStream(socket.getOutputStream());;
-			in = new InputStreamReader(socket.getInputStream());
-			bf = new BufferedReader(in);
+			in = new DataInputStream(socket.getInputStream());
 		} catch (Exception e) {
 			System.out.print("Error: No Client!");
 		}
 	}	
 	
-	// Make sure to change
 	public void send(String s) throws IOException {
-        String message = s + "\n";
-        byte[] temp = message.getBytes();
-        out.write(temp);
-        System.out.println("sendMessageToServer: " + s);
+        out.write(s.getBytes());
 	}
 	
 	public String receive() throws IOException {
-        int tempinput;
-        StringBuilder response = new StringBuilder();
-        while((tempinput = in.read()) != '\n'){ // 10 is ASCII code for newLine
-            response.append((char) tempinput);
-        }
-        System.out.println("receiveMessageFromServer: " + response);
-        return response.toString();
+		return in.toString();
 	}	
 	
 	// This contains the index of the largest server stored in allServers
