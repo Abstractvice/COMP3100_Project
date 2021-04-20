@@ -1,7 +1,7 @@
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -31,16 +31,12 @@ import org.w3c.dom.NodeList;
 
 public class SocketClient {
 	
+	private DataOutputStream out;
+	
 	private Socket socket;
-	private PrintWriter pr;
+	//private PrintWriter pr;
 	private InputStreamReader in;	
 	private BufferedReader bf;	
-	
-	// This contains the index of the largest server stored in allServers
-	private int largestServer = 0; // Stores the position of the largest server in the 2D array
-	
-	private ArrayList<Server> allServers = new ArrayList<Server>();
-	private ArrayList<Job> allJobs = new ArrayList<Job>();
 	
 	private class Server {
 		public String type;
@@ -55,6 +51,10 @@ public class SocketClient {
 			return type;
 		}
 		
+		/*int getCoreCount() {
+			return coreCount;
+		} */
+		
 		Server(String t, int l, int bT, float hR, int cC, int m, int d) {
 			this.type = t;
 			this.limit = l;
@@ -65,7 +65,7 @@ public class SocketClient {
 			this.disk = d;
 		}
 		
-	}
+	}	
 	
 	private class Job {
 		int submitTime;
@@ -75,6 +75,10 @@ public class SocketClient {
 		int memory;
 		int disk;
 		
+/*		int getCores() {
+			return cores;
+		} */
+		
 		Job(int sT, int jID, int eR, int c, int m, int d) {
 			this.submitTime = sT;
 			this.jobID = jID;
@@ -83,20 +87,53 @@ public class SocketClient {
 			this.memory = m;
 			this.disk = d;
 		}
-	}
-	
-	//-----------------------------
+	}	
 	
 	public SocketClient(String IP, int port) {
 		try {
 			socket = new Socket(IP, port);
-			pr = new PrintWriter(socket.getOutputStream());
+			//pr = new PrintWriter(socket.getOutputStream());
+			out = new DataOutputStream(socket.getOutputStream());;
 			in = new InputStreamReader(socket.getInputStream());
 			bf = new BufferedReader(in);
 		} catch (Exception e) {
 			System.out.print("Error: No Client!");
 		}
+	}	
+	
+	// Make sure to change
+	public void send(String s) throws IOException {
+        String message = s + "\n";
+        byte[] temp = message.getBytes();
+        out.write(temp);
+        System.out.println("sendMessageToServer: " + s);
 	}
+	
+	public String receive() throws IOException {
+        int tempinput;
+        StringBuilder response = new StringBuilder();
+        while((tempinput = in.read()) != '\n'){ // 10 is ASCII code for newLine
+            response.append((char) tempinput);
+        }
+        System.out.println("receiveMessageFromServer: " + response);
+        return response.toString();
+	}	
+	
+	// This contains the index of the largest server stored in allServers
+	private int largestServer = 0; // Stores the position of the largest server in the 2D array
+	
+	private ArrayList<Server> allServers = new ArrayList<Server>();
+	private ArrayList<Job> allJobs = new ArrayList<Job>();
+	
+
+	
+
+	
+	//-----------------------------
+	
+
+	
+
 	
 	// https://www.javatpoint.com/how-to-read-xml-file-in-java
 	// Parses the XML file and determines which server is the largest
@@ -135,7 +172,7 @@ public class SocketClient {
 				if (Integer.parseInt(eElement.getAttribute("coreCount")) > coreCount) {
 					coreCount = Integer.parseInt(eElement.getAttribute("coreCount"));
 					largestServer = i;
-				}
+				} // Find largest?
 				
 				//System.out.print(coreCount);
 				
@@ -147,29 +184,19 @@ public class SocketClient {
 		}
 	}	
 	
-	public String receive() {
-		String message = "";
-		try {
-			message = bf.readLine();
-		} catch (Exception e) {
-			System.out.print("Error in receiving message!");
-		}
-		return message;
-	}
-
-	// *** error message?
-	public void send(String s) {
-		pr.println(s);
-		pr.flush();
-	}
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {
-		SocketClient client = new SocketClient("Localhost", 50000);
 		
+		String IP = "Localhost"; // or 127.0.0.1
+		int port = 50000;
+		SocketClient client = new SocketClient(IP, port);
+		
+		// Handshake
 		client.send("HELO");
-		client.receive();
+		client.receive(); // Server responds with OK
 		client.send("AUTH " + System.getProperty("user.name"));
-		client.receive();
+		client.receive(); // Server responds with OK
+		
 		client.readXML("ds-system.xml");
 		client.send("REDY");
 		
@@ -179,6 +206,7 @@ public class SocketClient {
 		boolean looping = true;
 		
 		// Continues while connection is open
+		// Need 3 layer loop?
 		if (!str.equals("NONE")) {
 			while (looping) {
 				if (str.equals("NONE")) {
@@ -195,9 +223,11 @@ public class SocketClient {
 				
 				// Example: 	SCHD 	jobID 	serverType 	serverID
 				//				SCHD 	3 		Joon 		1
+				// Might have to be "\\s+"
 				String[] jobInfo = str.split("\\s+");
 				int numOfJobs = Integer.parseInt(jobInfo[2]);
-				client.send("SCHD " + numOfJobs + " " + client.allServers.get(client.largestServer).getType() + " " + "0");
+				client.send("SCHD" + " " + numOfJobs + " " + 
+						client.allServers.get(client.largestServer).getType() + " " + "0");
 			}
 			
 		}
