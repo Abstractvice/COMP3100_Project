@@ -1,8 +1,6 @@
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -30,12 +28,19 @@ import org.w3c.dom.NodeList;
 
 //import SocketClient.Server;
 
+// ./ds-server -c ds-sample-config01.xml -v all
+// ./ds-client -a bf
+
+// Reference implementation: ./ds-server -c ds-sample-config01.xml -v all
+
 public class SocketClient {
 	
 	private Socket socket;	
 	private DataOutputStream out;
 	private DataInputStream in;	
 	
+	
+	// Try and remove this, seems pointless
 	private class Server {
 		public String type;
 		public int limit;
@@ -65,28 +70,6 @@ public class SocketClient {
 		
 	}	
 	
-	private class Job {
-		int submitTime;
-		int jobID;
-		int estRuntime;
-		int cores;
-		int memory;
-		int disk;
-		
-/*		int getCores() {
-			return cores;
-		} */
-		
-		Job(int sT, int jID, int eR, int c, int m, int d) {
-			this.submitTime = sT;
-			this.jobID = jID;
-			this.estRuntime = eR;
-			this.cores = c;
-			this.memory = m;
-			this.disk = d;
-		}
-	}	
-	
 	public SocketClient(String IP, int port) {
 		try {
 			socket = new Socket(IP, port);
@@ -98,28 +81,40 @@ public class SocketClient {
 	}	
 	
 	public void send(String s) throws IOException {
-        out.write(s.getBytes());
+        try {
+        	out.write(s.getBytes());
+        } catch (Exception e) {
+        	System.out.print("ERROR: Failed to send");
+        }
+        System.out.println("Message sent: " + s);
+        
 	}
 	
-	public String receive() throws IOException {
-		return in.toString();
+	// Find source from StackOverflow JUST IN CASE
+	public String receive() {
+		StringBuilder line = new StringBuilder();
+		
+		try {
+			int newLine;
+			line = new StringBuilder();
+			while ((newLine = in.read()) != '\n') {
+				line.append((char) newLine);
+			}	
+		} catch (Exception e) {
+			System.out.print("ERROR: Failed to receive");
+		}
+		
+		System.out.println("Message received: " + line);	
+		
+		return line.toString();
 	}	
 	
 	// This contains the index of the largest server stored in allServers
 	private int largestServer = 0; // Stores the position of the largest server in the 2D array
 	
 	private ArrayList<Server> allServers = new ArrayList<Server>();
-	private ArrayList<Job> allJobs = new ArrayList<Job>();
-	
-
-	
-
 	
 	//-----------------------------
-	
-
-	
-
 	
 	// https://www.javatpoint.com/how-to-read-xml-file-in-java
 	// Parses the XML file and determines which server is the largest
@@ -173,7 +168,7 @@ public class SocketClient {
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {
 		
-		String IP = "Localhost"; // or 127.0.0.1
+		String IP = "Localhost"; // or 127.0.)0.1
 		int port = 50000;
 		SocketClient client = new SocketClient(IP, port);
 		
