@@ -187,7 +187,7 @@ public class SocketClient {
 					looping = false;
 					break;
 				}			
-				// Server sends job informtion
+				// Server sends job information
 				if (str.equals("JOBN") || str.equals("JCPL")) { // Is this even necessary?
 					client.send("REDY");
 					str = client.receive();
@@ -202,14 +202,13 @@ public class SocketClient {
 					client.send(SCHD + " " + jobID + " " + serverType + " " + serverID);
 				}
 			}
-			
 		}
-		
 		
 		client.send("QUIT"); 
 		
 		client.receive();
 		client.socket.close();
+		System.exit(1);
 		
 	}
 }
