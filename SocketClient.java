@@ -39,6 +39,10 @@ public class SocketClient {
 	private DataOutputStream out;
 	private DataInputStream in;	
 	
+	private int largestServer = 0; // Stores the position of the largest server in the 2D array
+	
+	private ArrayList<Server> allServers = new ArrayList<Server>();
+	
 	
 	// Try and remove this, seems pointless
 	private class Server {
@@ -109,15 +113,8 @@ public class SocketClient {
 		return line.toString();
 	}	
 	
-	// This contains the index of the largest server stored in allServers
-	private int largestServer = 0; // Stores the position of the largest server in the 2D array
-	
-	private ArrayList<Server> allServers = new ArrayList<Server>();
-	
-	//-----------------------------
-	
 	// https://www.javatpoint.com/how-to-read-xml-file-in-java
-	// Parses the XML file and determines which server is the largest
+	// Parses the XML file and also determines which server is the largest
 	public void readXML(String XMLFile) {
 		try {
 			// Here we are creating a constructor of file class that parses an XML file
@@ -132,7 +129,6 @@ public class SocketClient {
 			doc.getDocumentElement().normalize(); // What does this do?
 			
 			NodeList nodeListServer = doc.getElementsByTagName("server");
-			//NodeList nodeListJob = doc.getElementsByTagName("job");
 			
 			int coreCount = 0;
 			
@@ -155,8 +151,6 @@ public class SocketClient {
 					largestServer = i;
 				} // Find largest?
 				
-				//System.out.print(coreCount);
-				
 			}
 			
 		}
@@ -164,7 +158,6 @@ public class SocketClient {
 			e.printStackTrace();
 		}
 	}	
-	
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {
 		
@@ -195,20 +188,19 @@ public class SocketClient {
 					break;
 				}			
 				// Server sends job informtion
-				if (str.equals("OK")) {
+				if (str.equals("JOBN") || str.equals("JCPL")) { // Is this even necessary?
 					client.send("REDY");
 					str = client.receive();
+					
+				} else {
+					String[] jobInfo = str.split("\\s+");
+					String SCHD = "SCHD";
+					int jobID = Integer.parseInt(jobInfo[2]); // May have to be string
+					String serverType = client.allServers.get(client.largestServer).getType();
+					String serverID = "0";
+					
+					client.send(SCHD + " " + jobID + " " + serverType + " " + serverID);
 				}
-				
-				// [JOBN][submitTime][jobID][estRuntime][core][memory][disk]
-				
-				// Example: 	SCHD 	jobID 	serverType 	serverID
-				//				SCHD 	3 		Joon 		1
-				// Might have to be "\\s+"
-				String[] jobInfo = str.split("\\s+");
-				int numOfJobs = Integer.parseInt(jobInfo[2]);
-				client.send("SCHD" + " " + numOfJobs + " " + 
-						client.allServers.get(client.largestServer).getType() + " " + "0");
 			}
 			
 		}
