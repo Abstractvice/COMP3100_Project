@@ -187,8 +187,6 @@ public class SocketClient {
 		client.out.close();
 		client.socket.close();
 
-		System.exit(1);
-
 	}
 
 }
