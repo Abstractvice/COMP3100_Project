@@ -252,6 +252,22 @@ public class SocketClient {
 
 		return result;
 	}
+	
+	public void sortServers(ArrayList<SocketServerState> servers) {
+		
+		SocketServerState temp;
+		
+		for (int i = 0; i < servers.size(); i++) {
+			for (int j = i + 1; j < servers.size(); j++) {
+				if (servers.get(i).getCoreCount() > servers.get(j).getCoreCount()) {
+					temp = servers.get(i);
+					servers.set(i, servers.get(j));
+					servers.set(j, temp);
+				}
+			}
+		}
+			
+	}
 
 	/**
 	 * Client Scheduler
@@ -346,7 +362,7 @@ public class SocketClient {
 
 				}
 
-				// sortServers(allServers);
+				sortServers(allServers); //Likely Works?
 
 				send("OK\n");
 
@@ -359,7 +375,7 @@ public class SocketClient {
 
 				String SCHD = "SCHD";
 				int jobID = Integer.parseInt(currentJob[2]);
-				String serverType = allServers.get(bestFit).getType(); // What we need to manipulate
+				String serverType = allServers.get(firstFit).getType(); // What we need to manipulate
 				String serverID = "0";
 
 				send(SCHD + " " + jobID + " " + serverType + " " + serverID + "\n");
