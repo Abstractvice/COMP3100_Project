@@ -12,8 +12,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * ./test_results "java myScheduler -a fff" -o tt -n -c /home/luigiv/Documents/COMP3100/Testing/configs
+ * ./test_results "java myScheduler" -o tt -n -c /home/luigiv/Documents/COMP3100/Testing/configs
  * 
+ * ./ds-server -c config100-short-low.xml -v all -n
  * ./ds-server -c ds-sample-config01.xml -v all -n
  * ./ds-server -c ds-config01--wk9.xml -v all -n _> worstFit.xml.log         -i
  *
@@ -36,20 +37,43 @@ import org.w3c.dom.NodeList;
 
 public class SocketClient {
 
+	// Initialises all the relevant commands that ds-sim responds to
+	private final String AUTH = "AUTH " + System.getProperty("user.name") + "\n";	
+	private final String CNTJ = "CNTJ";
+	private final String GETSCAPABLE = "GETS Capable";
+	private final String HELO = "HELO\n";
+	private final String LSTJ = "LSTJ\n";
+	private final String OK = "OK\n";
+	private final String QUIT = "QUIT\n";
+	private final String REDY = "REDY\n";
+	private final String SCHD = "SCHD";
+	
+	// Initialises all the commands that we will receive from DS-SIM
+	private final String JCPL = "JCPL";
+	private final String JOBN = "JOBN";	
+	private final String NONE = "NONE";
+	
 	// Input and output byte streams
 	private Socket socket;
 	private DataOutputStream out;
 	private DataInputStream in;
 
-	// Stores all the parsed by readXML method
+	// Our server data, both the initial data derived from our XML as well as the updated server data
+	// given to us by ds-sim , which is updated after each job is submitted
 	private ArrayList<SocketServer> allServersInitial = new ArrayList<SocketServer>();
 	private ArrayList<SocketServerState> allServers = new ArrayList<SocketServerState>();
 
 	// SocketClient constructor
 	public SocketClient(String IP, int port) {
+		// Establish connection
 		try {
+			// Attempt to connect to the server
 			socket = new Socket(IP, port);
+			
+			// Initialise output stream that is the commands sent to the server
 			out = new DataOutputStream(socket.getOutputStream());
+			
+			// Initialise input stream that is the commands received from the server
 			in = new DataInputStream(socket.getInputStream());
 		} catch (Exception e) {
 			System.out.print("Error: No Client!");
@@ -119,18 +143,6 @@ public class SocketClient {
 
 	}
 
-	// Comments will go through this process using the ds-sim protocol as a
-	// reference
-	public static void main(String args[]) throws IOException {
-
-		String IP = "Localhost";
-		int port = 50000;
-		SocketClient client = new SocketClient(IP, port);
-
-		client.run();
-
-	}
-
 	public int fitnessValue(SocketServerState server, SocketJob job) {
 
 		int numOfRequiredCores = job.getCore();
@@ -165,92 +177,53 @@ public class SocketClient {
 
 		return false;
 	}
-
+	
+	
+	public int nextFit(SocketJob job) {
+		return -1;
+	}
+	
 	// Returns the index in our allServers arrayList of the most suitable server
 	// relative to this algorithm
 	public int firstFit(SocketJob job) {
 
 		int index = 0;
+		
+		boolean check = false;
 
 		for (int i = 0; i < allServers.size(); i++) {
+			
 			if (canFit(allServers.get(i), job)) {
+				
+				if (isServerActive(allServers.get(i)))
 				// System.out.println(i);
-				index = i;
-				break;
-			}
-		}
-
-		return index;
-	}
-
-	public int bestFit(SocketJob job) {
-
-		int bestFit = Integer.MAX_VALUE;
-		int index = 0;
-
-		for (int i = 0; i < allServers.size(); i++) {
-
-			if (canFit(allServers.get(i), job)) {
-
-				int fitnessValue = fitnessValue(allServers.get(i), job);
-
-				if (fitnessValue < bestFit) {
-					bestFit = fitnessValue;
 					index = i;
-				}
-
-			}
-
-		}
-
-		return index;
-
-	}
-
-	public int worstFit(SocketJob job) {
-
-		int worstFit = 0; // Integer.MIN_VALUE
-		int index = 0;
-
-		for (int i = 0; i < allServers.size(); i++) {
-
-			if (isServerAvailable(allServers.get(i))) {
-
-				if (canFit(allServers.get(i), job)) {
-
-					int fitnessValue = fitnessValue(allServers.get(i), job);
-
-					if (fitnessValue > worstFit) {
-						worstFit = fitnessValue;
-						index = i;
-					}
-
-				}
-
+					check = true;
+					break;
 			}
 		}
 
 		return index;
 	}
+	
+	public boolean isServerActive(SocketServerState server) {
+		boolean result = false;
 
-/*	public void sortServers(ArrayList<SocketServerState> a) {
-		int[] cores = new int[a.size()];
-
-		ArrayList<SocketServerState> temp = new ArrayList<>();
-
-	} */
-
-	public boolean isServerAvailable(SocketServerState server) {
-		boolean result = true;
-
-		if (server.getServerState().equals("booting"))
-			result = false;
+		if (server.getServerState().equals("inactive"))
+			result = true;
 		if (server.getServerState().equals("active"))
-			result = false;
-		if (server.getServerState().equals("unavailable"))
-			result = false;
+			result = true;
+		if (server.getServerState().equals("booting"))
+			result = true;
 
 		return result;
+	}
+	
+	public boolean waitingJobs(SocketServerState server) {
+		boolean result = false;
+		
+		return true;
+		
 	}
 	
 	public void sortServers(ArrayList<SocketServerState> servers) {
@@ -268,7 +241,47 @@ public class SocketClient {
 		}
 			
 	}
+	
+	public void sortServersDescending(ArrayList<SocketServerState> servers) {
+		
+		SocketServerState temp;
+		
+		for (int i = 0; i < servers.size(); i++) {
+			for (int j = i + 1; j < servers.size(); j++) {
+				if (servers.get(i).getCoreCount() > servers.get(j).getCoreCount()) {
+					temp = servers.get(i);
+					servers.set(i, servers.get(j));
+					servers.set(j, temp);
+				}
+			}
+		}
+			
+	}
 
+	public SocketJob getJob(String[] jobInfo) {
+		String type = jobInfo[0];
+		int submitTime = Integer.parseInt(jobInfo[1]);
+		int id = Integer.parseInt(jobInfo[2]);
+		int estRunTime = Integer.parseInt(jobInfo[3]);
+		int core = Integer.parseInt(jobInfo[4]);
+		int memory = Integer.parseInt(jobInfo[5]);
+		int disk = Integer.parseInt(jobInfo[6]);
+		
+		return new SocketJob(type, submitTime, id, estRunTime, core, memory, disk);
+	}
+	
+	public SocketServerState getServer(String[] serverInfo) {
+		String typeS = serverInfo[0];
+		int serverID = Integer.parseInt(serverInfo[1]);
+		String state = serverInfo[2];
+		int currStartTime = Integer.parseInt(serverInfo[3]);
+		int coreCountS = Integer.parseInt(serverInfo[4]);
+		int memoryS = Integer.parseInt(serverInfo[5]);
+		int diskS = Integer.parseInt(serverInfo[6]);
+		
+		return new SocketServerState(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS);
+	}
+	
 	/**
 	 * Client Scheduler
 	 * 
@@ -277,19 +290,19 @@ public class SocketClient {
 	 * type limit bootupTime hourlyRate coreCount memory disk 0 1 2 3 4 5 6
 	 * 
 	 * serverType serverID state curStartTime core memory disk 0 1 2 3 4 5 6
-	 */
-
+	 */	
+	
 	public void run() throws IOException {
 
 		// Handshake and XML parsing (Steps 1 to 4)
-		send("HELO\n");
+		send(HELO);
 		receive();
-		send("AUTH " + System.getProperty("user.name") + "\n");
+		send(AUTH);
 		receive();
 		readXML("ds-system.xml");
 
 		// Step 5
-		send("REDY\n");
+		send(REDY);
 
 		// Step 6
 		String str = receive(); // Assumes it receives either JOBN or NONE at first
@@ -299,14 +312,14 @@ public class SocketClient {
 		while (looping) {
 			// Processing possible conditional Step 6 or Step 10
 
-			if (str.equals("NONE")) {
+			if (str.equals(NONE)) {
 				looping = false;
 				break;
 			}
 
 			// Prompts client to confirm it is ready for the next job (if any)
-			if (str.contains("JCPL")) {
-				send("REDY\n");
+			if (str.contains(JCPL)) {
+				send(REDY);
 				str = receive();
 				// Step 7: the scheduling decision is sent to the server, based directly on
 				// ds-sim user guide
@@ -316,64 +329,43 @@ public class SocketClient {
 			// GETS ALL | Type serverType | Capable core memory disk | Avail core memory
 			// disk
 
-			if (str.contains("JOBN")) {
+			if (str.contains(JOBN)) {
 
 				String[] currentJob = str.split("\\s+");
 
-				String type = currentJob[0];
-				int submitTime = Integer.parseInt(currentJob[1]);
-				int id = Integer.parseInt(currentJob[2]);
-				int estRunTime = Integer.parseInt(currentJob[3]);
-				int core = Integer.parseInt(currentJob[4]);
-				int memory = Integer.parseInt(currentJob[5]);
-				int disk = Integer.parseInt(currentJob[6]);
-
-				SocketJob job = new SocketJob(type, submitTime, id, estRunTime, core, memory, disk);
+				SocketJob job = getJob(currentJob);
 
 				// -----------------------------------------------------------------------------------
-				String GETSCapable = "GETS Capable";
 
 				int coreCount = job.getCore();
 				int capableCore = job.getMemory();
 				int availCore = job.getDisk();
 
-				send(GETSCapable + " " + coreCount + " " + capableCore + " " + availCore + "\n");
+				send(GETSCAPABLE + " " + coreCount + " " + capableCore + " " + availCore + "\n");
 				str = receive();
 
 				String[] dataSplit = str.split("\\s+");
 				int numOfItems = Integer.parseInt(dataSplit[1]);
 
-				send("OK\n");
+				send(OK);
 
 				for (int i = 0; i < numOfItems; i++) {
 					str = receive();
 					String[] serverState = str.split("\\s+");
 
-					String typeS = serverState[0];
-					int serverID = Integer.parseInt(serverState[1]);
-					String state = serverState[2];
-					int currStartTime = Integer.parseInt(serverState[3]);
-					int coreCountS = Integer.parseInt(serverState[4]);
-					int memoryS = Integer.parseInt(serverState[5]);
-					int diskS = Integer.parseInt(serverState[6]);
-
-					allServers.add(
-							new SocketServerState(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS));
+					allServers.add(getServer(serverState));
 
 				}
 
 				sortServers(allServers); //Likely Works?
 
-				send("OK\n");
+				send(OK);
 
 				str = receive(); // likely to contain "."
 				// ------------------------------------------------------------------------------------
 
 				int firstFit = firstFit(job); // Seems to work??????????? Should be TINY
-				int bestFit = bestFit(job);
-				int worstFit = worstFit(job);
 
-				String SCHD = "SCHD";
 				int jobID = Integer.parseInt(currentJob[2]);
 				String serverType = allServers.get(firstFit).getType(); // What we need to manipulate
 				String serverID = "0";
@@ -382,7 +374,7 @@ public class SocketClient {
 
 				str = receive(); // Step 8: Server sends OK for job scheduled
 				// send("QUIT\n");
-				send("REDY\n"); // Step 9(5): Client assumes there are more jobs, so sends "REDY"
+				send(REDY); // Step 9(5): Client assumes there are more jobs, so sends "REDY"
 				str = receive(); // Step 10
 
 				allServers.clear();
@@ -393,10 +385,22 @@ public class SocketClient {
 		// Step 11 contained within the loop but too abstracted to be pointed out
 		// specifically
 
-		send("QUIT\n"); // Step 12
+		send(QUIT); // Step 12
 		receive(); // Step 13
 		out.close();
 		socket.close();
+
+	}
+	
+	// Comments will go through this process using the ds-sim protocol as a
+	// reference
+	public static void main(String args[]) throws IOException {
+
+		String IP = "Localhost";
+		int port = 50000;
+		SocketClient client = new SocketClient(IP, port);
+
+		client.run();
 
 	}
 
