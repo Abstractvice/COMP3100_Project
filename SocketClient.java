@@ -12,11 +12,13 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * ./test_results "java myScheduler" -o tt -n -c /home/luigiv/Documents/COMP3100/Testing/configs
+ * ./test_results "java SocketClient" -o tt -n -c /home/luigiv/Documents/COMP3100/Testing/configs/other
  * 
+ * ./ds-server -c config20-long-high.xml -v all -n
  * ./ds-server -c config100-short-low.xml -v all -n
+ * ./ds-server -c config20-long-low.xml -v all -n
  * ./ds-server -c ds-sample-config01.xml -v all -n
- * ./ds-server -c ds-config01--wk9.xml -v all -n _> worstFit.xml.log         -i
+ * ./ds-server -c ds-config01--wk9.xml -v all -n        -i
  *
  * ./ds-server -c ds-sample-config01.xml -v all -n
  * ./ds-server -i -c ds-sim.xml -v all
@@ -40,6 +42,7 @@ public class SocketClient {
 	// Initialises all the relevant commands that ds-sim responds to
 	private final String AUTH = "AUTH " + System.getProperty("user.name") + "\n";	
 	private final String CNTJ = "CNTJ";
+	private final String GETSALL = "GETS All";
 	private final String GETSCAPABLE = "GETS Capable";
 	private final String HELO = "HELO\n";
 	private final String LSTJ = "LSTJ\n";
@@ -152,15 +155,6 @@ public class SocketClient {
 
 	}
 
-/*	public boolean isActive(SocketServer server) {
-		int serverState = server.getBootupTime();
-
-		if (serverState == 0 || serverState == 2 || serverState == 3)
-			return true;
-
-		return false;
-	} */
-
 	// A server can fit a job if the number of cores, memory and disk space is >= to
 	// the jobs given specs
 	public boolean canFit(SocketServerState server, SocketJob job) {
@@ -178,9 +172,44 @@ public class SocketClient {
 		return false;
 	}
 	
+	private int nextFitPointer = 0;
 	
 	public int nextFit(SocketJob job) {
-		return -1;
+		
+		boolean check = false;
+		
+		if (nextFitPointer < 0)
+			nextFitPointer = 0;
+		
+		int index = nextFitPointer;
+		
+		for (int i = index; i < allServers.size(); i++) {
+			if (canFit(allServers.get(i), job)) {
+				if (isServerActive(allServers.get(i))) {
+					index = i;
+					check = true;
+					break;
+				}
+			}
+			if (index == allServers.size() - 1)
+				index = 0;
+		}
+		
+		if (!check) {
+			for (int i = index; i < allServers.size(); i++) {
+				if (canFit(allServers.get(i), job)) {
+					index = i;
+					break;
+				}
+				if (index == allServers.size() - 1)
+					index = 0;
+			}
+		}
+		
+		nextFitPointer = index - 1;
+		
+		return nextFitPointer + 1;
+		
 	}
 	
 	// Returns the index in our allServers arrayList of the most suitable server
@@ -195,11 +224,20 @@ public class SocketClient {
 			
 			if (canFit(allServers.get(i), job)) {
 				
-				if (isServerActive(allServers.get(i)))
-				// System.out.println(i);
+				if (isServerActive(allServers.get(i))) {
 					index = i;
 					check = true;
 					break;
+				}
+			}
+		}
+		
+		if (!check) {
+			for (int i = 0; i < allServers.size(); i++) {
+				if (canFit(allServers.get(i), job)) {
+					index = i;
+					break;
+				}
 			}
 		}
 
@@ -227,22 +265,6 @@ public class SocketClient {
 	}
 	
 	public void sortServers(ArrayList<SocketServerState> servers) {
-		
-		SocketServerState temp;
-		
-		for (int i = 0; i < servers.size(); i++) {
-			for (int j = i + 1; j < servers.size(); j++) {
-				if (servers.get(i).getCoreCount() > servers.get(j).getCoreCount()) {
-					temp = servers.get(i);
-					servers.set(i, servers.get(j));
-					servers.set(j, temp);
-				}
-			}
-		}
-			
-	}
-	
-	public void sortServersDescending(ArrayList<SocketServerState> servers) {
 		
 		SocketServerState temp;
 		
@@ -365,9 +387,10 @@ public class SocketClient {
 				// ------------------------------------------------------------------------------------
 
 				int firstFit = firstFit(job); // Seems to work??????????? Should be TINY
-
+				int nextFit = nextFit(job);
+				
 				int jobID = Integer.parseInt(currentJob[2]);
-				String serverType = allServers.get(firstFit).getType(); // What we need to manipulate
+				String serverType = allServers.get(nextFit).getType(); // What we need to manipulate
 				String serverID = "0";
 
 				send(SCHD + " " + jobID + " " + serverType + " " + serverID + "\n");
