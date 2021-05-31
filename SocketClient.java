@@ -391,13 +391,13 @@ public class SocketClient {
 				str = receive(); // likely to contain "."
 
 				//int firstFit = firstFit(job); // Seems to work??????????? Should be TINY
-				int nextFit = nextFit(job);
-				//int optimalFit = optimalFit(job);
+				//int nextFit = nextFit(job);
+				int optimalFit = optimalFit(job);
 				
 				// _____________________________________________________________________________________________________________________
 				
 				int jobID = Integer.parseInt(currentJob[2]);
-				String serverType = allServers.get(nextFit).getType(); // What we need to manipulate
+				String serverType = allServers.get(optimalFit).getType(); // What we need to manipulate
 				String serverID = "0";
 
 				send(SCHD + " " + jobID + " " + serverType + " " + serverID + "\n");
@@ -425,45 +425,57 @@ public class SocketClient {
 	/**
 	 * Basic algorithm idea: Prioritise in the following order:
 	 * 
-	 * 		1. Inactive servers: immediately available with no running jobs
+	 * 		1. Inactive servers: immediately available with no running jobs, pick first so they can boot and then go idle
 	 * 		2. Idle servers: immediately available with no running jobs 
 	 * 		3. Active servers: possibly available
 	 * 			3.1. Store the active servers with NO waiting jobs
 	 * 			3.2. Store the active servers WITH waiting jobs in separate storage
 	 * 
 	 */
-	public SocketServer optimalFit(SocketJob job) {
+	public int optimalFit(SocketJob job) {
 		
-		SocketServer optimalServer = null;
+		int optimalServerIndex = 0;
 		
-		ArrayList<SocketServer> inactiveServers = new ArrayList<>();
-		ArrayList<SocketServer> nonWaitingActiveServers = new ArrayList<>();
-		ArrayList<SocketServer> activeServers = new ArrayList<>();
+		ArrayList<Integer> inactiveServers = new ArrayList<>();
+		ArrayList<Integer> nonWaitingActiveServers = new ArrayList<>();
+		ArrayList<Integer> activeServers = new ArrayList<>();
 		
 		for (int i = 0; i < allServers.size(); i++) {
 			// best case scenario
 			if (isIdle(allServers.get(i))) {
-				optimalServer = allServers.get(i);
+				optimalServerIndex = i;
 			}	
 			// Next best thing, but must boot
 			if (isInactive(allServers.get(i))) {
-				inactiveServers.add(allServers.get(i));
+				inactiveServers.add(i);
 			}
 			
 			if (isActive(allServers.get(i))) {
 				// Store all active servers with no waiting jobs
 				if (noWaitingJobs(allServers.get(i))) {
-					nonWaitingActiveServers.add(allServers.get(i));
+					nonWaitingActiveServers.add(i);
 				} 
 				// Stores the rest of the active servers, the ones with waiting jobs
 				else {
-					activeServers.add(allServers.get(i));
+					activeServers.add(i);
 				}
 			}
+			
+			if (!nonWaitingActiveServers.isEmpty()) {
+				// Find index representing the shortest waiting time inside nonWaitingActiveServers
+			}
+			else if (!inactiveServers.isEmpty()) {
+				optimalServerIndex = inactiveServers.get(i); // smallest 
+			}
+			else if (!activeServers.isEmpty()) {
+				// return largest server
+			}
+			
+			//optimalServerIndex = server with the fewest number of waiting jobs
 
 		}
 		
-		return null;
+		return optimalServerIndex;
 		
 		
 	}
