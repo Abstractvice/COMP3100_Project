@@ -35,6 +35,8 @@ import org.w3c.dom.NodeList;
 /**
  * Things to do: - Implement either a firstFit or roundRobin scheduler
  *
+ *
+ *Try something else!!!!
  */
 
 public class SocketClient {
@@ -63,8 +65,8 @@ public class SocketClient {
 
 	// Our server data, both the initial data derived from our XML as well as the updated server data
 	// given to us by ds-sim , which is updated after each job is submitted
-	private ArrayList<SocketServer> allServersInitial = new ArrayList<SocketServer>();
-	private ArrayList<SocketServerState> allServers = new ArrayList<SocketServerState>();
+//	private ArrayList<SocketServer> allServersInitial = new ArrayList<SocketServer>();
+	private ArrayList<SocketServer> allServers = new ArrayList<SocketServer>();
 
 	// SocketClient constructor
 	public SocketClient(String IP, int port) {
@@ -110,43 +112,7 @@ public class SocketClient {
 		return line.toString();
 	}
 
-	// https://www.javatpoint.com/how-to-read-xml-file-in-java
-	// Parses the XML file and also determines which server is the largest
-	public void readXML(String XMLFile) {
-		try {
-			File file = new File(XMLFile);
-
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-
-			DocumentBuilder db = dbf.newDocumentBuilder();
-			Document doc = db.parse(file);
-			doc.getDocumentElement().normalize();
-
-			NodeList nodeListServer = doc.getElementsByTagName("server");
-
-			// Adds all the servers to allServers
-			for (int i = 0; i < nodeListServer.getLength(); i++) {
-				Element server = (Element) nodeListServer.item(i);
-
-				String t = server.getAttribute("type");
-				int l = Integer.parseInt(server.getAttribute("limit"));
-				int bT = Integer.parseInt(server.getAttribute("bootupTime"));
-				float hR = Float.parseFloat(server.getAttribute("hourlyRate"));
-				int cC = Integer.parseInt(server.getAttribute("coreCount"));
-				int m = Integer.parseInt(server.getAttribute("memory"));
-				int d = Integer.parseInt(server.getAttribute("disk"));
-
-				allServersInitial.add(new SocketServer(t, l, bT, hR, cC, m, d));
-
-			}
-
-		} catch (Exception e) {
-			System.out.print("ERROR: Failed to transcribe XML!");
-		}
-
-	}
-
-	public int fitnessValue(SocketServerState server, SocketJob job) {
+	public int fitnessValue(SocketServer server, SocketJob job) {
 
 		int numOfRequiredCores = job.getCore();
 		int serverCores = server.getCoreCount();
@@ -157,7 +123,7 @@ public class SocketClient {
 
 	// A server can fit a job if the number of cores, memory and disk space is >= to
 	// the jobs given specs
-	public boolean canFit(SocketServerState server, SocketJob job) {
+	public boolean canFit(SocketServer server, SocketJob job) {
 
 		int requiredCores = job.getCore();
 		int requiredMemory = job.getMemory();
@@ -244,7 +210,7 @@ public class SocketClient {
 		return index;
 	}
 	
-	public boolean isServerActive(SocketServerState server) {
+	public boolean isServerActive(SocketServer server) {
 		boolean result = false;
 
 		if (server.getServerState().equals("inactive"))
@@ -257,16 +223,16 @@ public class SocketClient {
 		return result;
 	}
 	
-	public boolean waitingJobs(SocketServerState server) {
+	public boolean waitingJobs(SocketServer server) {
 		boolean result = false;
 		
 		return true;
 		
 	}
 	
-	public void sortServers(ArrayList<SocketServerState> servers) {
+	public void sortServers(ArrayList<SocketServer> servers) {
 		
-		SocketServerState temp;
+		SocketServer temp;
 		
 		for (int i = 0; i < servers.size(); i++) {
 			for (int j = i + 1; j < servers.size(); j++) {
@@ -292,7 +258,7 @@ public class SocketClient {
 		return new SocketJob(type, submitTime, id, estRunTime, core, memory, disk);
 	}
 	
-	public SocketServerState getServer(String[] serverInfo) {
+	public SocketServer getServer(String[] serverInfo) {
 		String typeS = serverInfo[0];
 		int serverID = Integer.parseInt(serverInfo[1]);
 		String state = serverInfo[2];
@@ -301,7 +267,7 @@ public class SocketClient {
 		int memoryS = Integer.parseInt(serverInfo[5]);
 		int diskS = Integer.parseInt(serverInfo[6]);
 		
-		return new SocketServerState(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS);
+		return new SocketServer(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS);
 	}
 	
 	/**
@@ -321,12 +287,9 @@ public class SocketClient {
 		receive();
 		send(AUTH);
 		receive();
-		readXML("ds-system.xml");
+//		readXML("ds-system.xml");
 
-		// Step 5
 		send(REDY);
-
-		// Step 6
 		String str = receive(); // Assumes it receives either JOBN or NONE at first
 
 		boolean looping = true;

@@ -1,9 +1,10 @@
+
 public class SocketServer {
 
 	String type;
-	int limit;
-	int bootupTime;
-	float hourlyRate;
+	int serverID;
+	String serverState;
+	int currStartTime;
 	int coreCount;
 	int memory;
 	int disk;
@@ -12,16 +13,16 @@ public class SocketServer {
 		return type;
 	}
 	
-	int getLimit() {
-		return limit;
+	int getServerID() {
+		return serverID;
 	}
 	
-	int getBootupTime() {
-		return bootupTime;
+	String getServerState() {
+		return serverState;
 	}
 	
-	float getHourlyRate() {
-		return hourlyRate;
+	float getCurrStartTime() {
+		return currStartTime;
 	}
 	
 	int getCoreCount() {
@@ -36,15 +37,14 @@ public class SocketServer {
 		return disk;
 	}
 
-	SocketServer(String t, int l, int bT, float hR, int cC, int m, int d) {
+	SocketServer(String t, int sID, String sS, int cST, int cC, int m, int d) {
 		this.type = t;
-		this.limit = l;
-		this.bootupTime = bT;
-		this.hourlyRate = hR;
+		this.serverID = sID;
+		this.serverState = sS;
+		this.currStartTime = cST;
 		this.coreCount = cC;
 		this.memory = m;
 		this.disk = d;
 	}
-	
 	
 }
