@@ -268,8 +268,10 @@ public class SocketClient {
 		int coreCountS = Integer.parseInt(serverInfo[4]);
 		int memoryS = Integer.parseInt(serverInfo[5]);
 		int diskS = Integer.parseInt(serverInfo[6]);
+		int waitingJobs = Integer.parseInt(serverInfo[7]);
+		int runningJobs = Integer.parseInt(serverInfo[8]);
 		
-		return new SocketServer(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS);
+		return new SocketServer(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS, waitingJobs, runningJobs);
 	}
 	
 	public boolean isInactive(SocketServer server) {
@@ -403,13 +405,13 @@ public class SocketClient {
 				str = receive(); // likely to contain "."
 
 				//int firstFit = firstFit(job); // Seems to work??????????? Should be TINY
-				//int nextFit = nextFit(job);
-				int optimalFit = optimalFit(job);
+				int nextFit = nextFit(job);
+				//int optimalFit = optimalFit(job);
 				
 				// _____________________________________________________________________________________________________________________
 				
 				int jobID = Integer.parseInt(currentJob[2]);
-				String serverType = allServers.get(optimalFit).getType(); // What we need to manipulate
+				String serverType = allServers.get(nextFit).getType(); // What we need to manipulate
 				String serverID = "0";
 
 				send(SCHD + " " + jobID + " " + serverType + " " + serverID + "\n");

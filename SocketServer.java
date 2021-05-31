@@ -1,4 +1,3 @@
-
 public class SocketServer {
 
 	String type;
@@ -8,6 +7,8 @@ public class SocketServer {
 	int coreCount;
 	int memory;
 	int disk;
+	int waitingJobs;
+	int runningJobs;
 
 	String getType() {
 		return type;
@@ -36,8 +37,16 @@ public class SocketServer {
 	int getDisk() {
 		return disk;
 	}
+	
+	int getWaitingJobs() {
+		return waitingJobs;
+	}
+	
+	int getRunningJobs() {
+		return runningJobs;
+	}
 
-	SocketServer(String t, int sID, String sS, int cST, int cC, int m, int d) {
+	SocketServer(String t, int sID, String sS, int cST, int cC, int m, int d, int wJ, int rJ) {
 		this.type = t;
 		this.serverID = sID;
 		this.serverState = sS;
@@ -45,6 +54,7 @@ public class SocketServer {
 		this.coreCount = cC;
 		this.memory = m;
 		this.disk = d;
+		this.waitingJobs = wJ;
+		this.runningJobs = rJ;
 	}
-	
 }
