@@ -12,6 +12,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
+ * 
+ *  hello
  * ./test_results "java SocketClient" -o tt -n -c /home/luigiv/Documents/COMP3100/Testing/configs/other
  * 
  * ./ds-server -c config20-long-high.xml -v all -n
