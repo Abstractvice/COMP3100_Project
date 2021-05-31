@@ -122,23 +122,6 @@ public class SocketClient {
 		return serverCores - numOfRequiredCores;
 
 	}
-
-	// A server can fit a job if the number of cores, memory and disk space is >= to
-	// the jobs given specs
-	public boolean canFit(SocketServer server, SocketJob job) {
-
-		int requiredCores = job.getCore();
-		int requiredMemory = job.getMemory();
-		int requiredDiskSpace = job.getDisk();
-		int serverCores = server.getCoreCount();
-		int serverMemory = server.getMemory();
-		int serverDiskSpace = server.getDisk();
-
-		if (serverCores >= requiredCores && serverMemory >= requiredMemory && serverDiskSpace >= requiredDiskSpace)
-			return true;
-
-		return false;
-	}
 	
 	private int nextFitPointer = 0;
 	
@@ -398,7 +381,7 @@ public class SocketClient {
 				
 				int jobID = Integer.parseInt(currentJob[2]);
 				String serverType = allServers.get(optimalFit).getType(); // What we need to manipulate
-				String serverID = "0";
+				int serverID = allServers.get(optimalFit).getServerID();
 
 				send(SCHD + " " + jobID + " " + serverType + " " + serverID + "\n");
 
