@@ -223,7 +223,7 @@ public class SocketClient {
 			result = true;
 
 		return result;
-	}
+	} 
 	
 	public boolean waitingJobs(SocketServer server) {
 		boolean result = false;
@@ -270,6 +270,61 @@ public class SocketClient {
 		int diskS = Integer.parseInt(serverInfo[6]);
 		
 		return new SocketServer(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS);
+	}
+	
+	public boolean isInactive(SocketServer server) {
+		boolean inactive = false;
+		if (server.getServerState().equals("inactive"))
+			inactive = true;
+		
+		return inactive;
+	}	
+	
+	public boolean isBooting(SocketServer server) {
+		boolean booting = false;
+		if (server.getServerState().equals("booting"))
+			booting = true;
+		
+		return booting;
+	}	
+	
+	public boolean isIdle(SocketServer server) {
+		boolean idle = false;
+		if (server.getServerState().equals("idle"))
+			idle = true;
+		
+		return idle;
+	}
+	
+	public boolean isActive(SocketServer server) {
+		boolean active = false;
+		if (server.getServerState().equals("active"))
+			active = true;
+		
+		return active;
+	}
+	
+	public boolean isUnavailable(SocketServer server) {
+		boolean unavailable = false;
+		if (server.getServerState().equals("unavailable"))
+			unavailable = true;
+		
+		return unavailable;
+	}
+	
+
+	
+
+	
+	public SocketServer optimalFit(SocketJob job) {
+		
+		for (int i = 0; i < allServers.size(); i++) {
+			
+		}
+		
+		return null;
+		
+		
 	}
 	
 	/**
@@ -322,12 +377,9 @@ public class SocketClient {
 
 				SocketJob job = getJob(currentJob);
 
-				// -----------------------------------------------------------------------------------
-
 				int coreCount = job.getCore();
 				int capableCore = job.getMemory();
 				int availCore = job.getDisk();
-
 				send(GETSCAPABLE + " " + coreCount + " " + capableCore + " " + availCore + "\n");
 				str = receive();
 
@@ -349,13 +401,15 @@ public class SocketClient {
 				send(OK);
 
 				str = receive(); // likely to contain "."
-				// ------------------------------------------------------------------------------------
 
-				int firstFit = firstFit(job); // Seems to work??????????? Should be TINY
-				int nextFit = nextFit(job);
+				//int firstFit = firstFit(job); // Seems to work??????????? Should be TINY
+				//int nextFit = nextFit(job);
+				int optimalFit = optimalFit(job);
+				
+				// _____________________________________________________________________________________________________________________
 				
 				int jobID = Integer.parseInt(currentJob[2]);
-				String serverType = allServers.get(nextFit).getType(); // What we need to manipulate
+				String serverType = allServers.get(optimalFit).getType(); // What we need to manipulate
 				String serverID = "0";
 
 				send(SCHD + " " + jobID + " " + serverType + " " + serverID + "\n");
@@ -379,6 +433,8 @@ public class SocketClient {
 		socket.close();
 
 	}
+	
+	
 	
 	// Comments will go through this process using the ds-sim protocol as a
 	// reference
