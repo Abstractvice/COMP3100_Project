@@ -114,7 +114,7 @@ public class SocketClient {
 		return line.toString();
 	}
 
-	public int fitnessValue(SocketServer server, SocketJob job) {
+/*	public int fitnessValue(SocketServer server, SocketJob job) {
 
 		int numOfRequiredCores = job.getCore();
 		int serverCores = server.getCoreCount();
@@ -223,14 +223,7 @@ public class SocketClient {
 			result = true;
 
 		return result;
-	} 
-	
-	public boolean waitingJobs(SocketServer server) {
-		boolean result = false;
-		
-		return true;
-		
-	}
+	} */
 	
 	public void sortServers(ArrayList<SocketServer> servers) {
 		
@@ -274,6 +267,14 @@ public class SocketClient {
 		return new SocketServer(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS, waitingJobs, runningJobs);
 	}
 	
+	public boolean noWaitingJobs(SocketServer server) {
+		boolean waitingJobs = false;
+		if (server.getWaitingJobs() == 0)
+			waitingJobs = true;
+			
+		return waitingJobs;
+	}
+	
 	public boolean isInactive(SocketServer server) {
 		boolean inactive = false;
 		if (server.getServerState().equals("inactive"))
@@ -313,22 +314,7 @@ public class SocketClient {
 		
 		return unavailable;
 	}
-	
 
-	
-
-	
-	public SocketServer optimalFit(SocketJob job) {
-		
-		for (int i = 0; i < allServers.size(); i++) {
-			
-		}
-		
-		return null;
-		
-		
-	}
-	
 	/**
 	 * Client Scheduler
 	 * 
@@ -435,6 +421,72 @@ public class SocketClient {
 		socket.close();
 
 	}
+	
+	/**
+	 * Basic algorithm idea: Prioritise in the following order:
+	 * 
+	 * 		1. Inactive servers: immediately available with no running jobs
+	 * 		2. Idle servers: immediately available with no running jobs 
+	 * 		3. Active servers: possibly available
+	 * 			3.1. Store the active servers with NO waiting jobs
+	 * 			3.2. Store the active servers WITH waiting jobs in separate storage
+	 * 
+	 */
+	public SocketServer optimalFit(SocketJob job) {
+		
+		SocketServer optimalServer = null;
+		
+		ArrayList<SocketServer> inactiveServers = new ArrayList<>();
+		ArrayList<SocketServer> nonWaitingActiveServers = new ArrayList<>();
+		ArrayList<SocketServer> activeServers = new ArrayList<>();
+		
+		for (int i = 0; i < allServers.size(); i++) {
+			// best case scenario
+			if (isIdle(allServers.get(i))) {
+				optimalServer = allServers.get(i);
+			}	
+			// Next best thing, but must boot
+			if (isInactive(allServers.get(i))) {
+				inactiveServers.add(allServers.get(i));
+			}
+			
+			if (isActive(allServers.get(i))) {
+				// Store all active servers with no waiting jobs
+				if (noWaitingJobs(allServers.get(i))) {
+					nonWaitingActiveServers.add(allServers.get(i));
+				} 
+				// Stores the rest of the active servers, the ones with waiting jobs
+				else {
+					activeServers.add(allServers.get(i));
+				}
+			}
+
+		}
+		
+		return null;
+		
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
