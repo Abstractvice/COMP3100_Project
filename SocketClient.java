@@ -460,24 +460,36 @@ public class SocketClient {
 					activeServers.add(i);
 				}
 			}
-			
-			if (!nonWaitingActiveServers.isEmpty()) {
-				// Find index representing the shortest waiting time inside nonWaitingActiveServers
-			}
-			else if (!inactiveServers.isEmpty()) {
-				optimalServerIndex = inactiveServers.get(i); // smallest 
-			}
-			else if (!activeServers.isEmpty()) {
-				// return largest server
-			}
-			
-			//optimalServerIndex = server with the fewest number of waiting jobs
-
 		}
+			
+		// 
+		if (!nonWaitingActiveServers.isEmpty()) {
+			optimalServerIndex = shortestWaitTime(job); // Finds the ACTIVE server with the SHORTEST wait time
+		}
+		else if (!inactiveServers.isEmpty()) {
+			optimalServerIndex = inactiveServers.get(0); // Finds the SMALLEST server to schedule to, remember we have sorted allServers into ascending order
+		}
+		else if (!activeServers.isEmpty()) {
+			optimalServerIndex = fewestWaitingJobs(job);// returns the active server with the FEWEST waiting jobs. Worst case scenario
+		}
+			
+		//optimalServerIndex = server with the fewest number of waiting jobs
+
 		
 		return optimalServerIndex;
 		
 		
+	}
+	
+	public int shortestWaitTime(SocketJob job) {
+			
+		
+		return 0;
+		
+	}
+	
+	public int fewestWaitingJobs(SocketJob job) {
+		return 0;
 	}
 	
 	
@@ -487,7 +499,20 @@ public class SocketClient {
 	
 	
 	
-	
+	public boolean canFit(SocketServer server, SocketJob job) {
+
+		int requiredCores = job.getCore();
+		int requiredMemory = job.getMemory();
+		int requiredDiskSpace = job.getDisk();
+		int serverCores = server.getCoreCount();
+		int serverMemory = server.getMemory();
+		int serverDiskSpace = server.getDisk();
+
+		if (serverCores >= requiredCores && serverMemory >= requiredMemory && serverDiskSpace >= requiredDiskSpace)
+			return true;
+
+		return false;
+	}
 	
 	
 	
