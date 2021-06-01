@@ -488,6 +488,12 @@ public class SocketClient {
 		
 		int shortestWaitingTimeIndex = 0;
 		
+		// ------------------------------------------------------------------------------------------------------------
+		
+		// Here, we need to obtain a collection of all the running jobs in the current server (per iteration)
+		// Aligned with nonWaitingActiveServers index, contains the LATEST possible finish time for any given job in each server
+		ArrayList<Integer> latestFinishTimes = new ArrayList<>();
+		
 		for (int i = 0; i < nonWaitingActiveServers.size(); i++) {
 			
 			/**
@@ -497,6 +503,7 @@ public class SocketClient {
 			 */
 			
 			String serverType = allServers.get(nonWaitingActiveServers.get(i)).getType();
+			
 			int serverID = allServers.get(nonWaitingActiveServers.get(i)).getServerID();
 			
 			// ---------------------------------- Finding our running jobs on iterated server ------------------------------------------------
@@ -518,6 +525,8 @@ public class SocketClient {
 				String[] jobData = str.split(" ");
 				
 				// has our estimated start-time and estimated run-time, as aligned in ds-sim user guide
+				//	- [2] = job start time
+				// 	- [3] = estimated job run time
 				int[] temp = {Integer.parseInt(jobData[2]), Integer.parseInt(jobData[3])};
 						
 						
@@ -528,9 +537,27 @@ public class SocketClient {
 				str = receive();
 			}
 			
-			// -------------------------------------------------------------------------------------------------------------
+			// -------------------------------Finding latest completion time---------------
+			
+			int latestFinishTime = 0;
+			
+			for (int j = 0; j < activeJobs.size(); j++) {
+				
+				// Checks to see if the estimated run time ([0] + [1]) is greater than finishTime
+				int currentFinishTime = activeJobs.get(j)[0] + activeJobs.get(j)[1];
+				
+				if (currentFinishTime > latestFinishTime)
+					latestFinishTime = currentFinishTime;
+					
+			}
+			
+			latestFinishTimes.add(latestFinishTime);
+			
+			// 
 			
 		}
+		
+		// ---------------------------------------------------------------------------------------------------------------------
 		
 		/**
 		 * 3. Determine which server inside of our collection has the shortest waiting time
