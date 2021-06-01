@@ -419,9 +419,10 @@ public class SocketClient {
 	 * 		Add later: server with waiting jobs, t
 	 * 
 	 * 	page 14
+	 * @throws IOException 
 	 * 
 	 */
-	public int optimalFit(SocketJob job) {
+	public int optimalFit(SocketJob job) throws IOException {
 		
 		int optimalServerIndex = 0;
 		
@@ -439,24 +440,29 @@ public class SocketClient {
 		
 		for (int i = 0; i < allServers.size(); i++) {
 			// best case scenario, if true just use this one
-			if (isIdle(allServers.get(i))) {
-				optimalServerIndex = i;
-				alreadyObtainedServer = true;
-				break;
-			}	
-			// Next best thing, but must boot
-			if (isInactive(allServers.get(i))) {
-				inactiveServers.add(i);
-			}
+			if (canFit(allServers.get(i), job)) {
+				
+				if (isIdle(allServers.get(i))) {
+					optimalServerIndex = i;
+					alreadyObtainedServer = true;
+					break;
+				}	
+				
+				// Next best thing, but must boot
+				if (isInactive(allServers.get(i))) {
+					inactiveServers.add(i);
+				}
 			
-			if (isActive(allServers.get(i))) {
-				// Store all active servers with no waiting jobs
-				if (noWaitingJobs(allServers.get(i))) {
-					nonWaitingActiveServers.add(i);
-				} 
-				// Stores the rest of the active servers, the ones with waiting jobs
-				else {
-					activeServers.add(i);
+				if (isActive(allServers.get(i))) {
+					// Store all active servers with no waiting jobs
+					if (noWaitingJobs(allServers.get(i))) {
+						nonWaitingActiveServers.add(i);
+					} 
+					// Stores the rest of the active servers, the ones with waiting jobs
+					else {
+						activeServers.add(i);
+					}
+					
 				}
 			}
 		}
@@ -465,7 +471,7 @@ public class SocketClient {
 		// 
 			// do this one last
 			if (!nonWaitingActiveServers.isEmpty()) {
-				optimalServerIndex = shortestWaitTime(nonWaitingActiveServers); // Finds the ACTIVE server with the SHORTEST wait time
+				optimalServerIndex = shortestWaitTime(nonWaitingActiveServers, job.getSubmitTime()); // Finds the ACTIVE server with the SHORTEST wait time
 			}
 			else if (!inactiveServers.isEmpty()) {
 				optimalServerIndex = inactiveServers.get(0); // Finds the SMALLEST server to schedule to, remember we have sorted allServers into ascending order
@@ -484,7 +490,7 @@ public class SocketClient {
 	
 	// index of the server with shortest ESTIMATED waiting time if a potential new job is added
 	// In essence, we want to schedule our job to a server which will result in the smallest amount of waiting time being added
-	public int shortestWaitTime(ArrayList<Integer> nonWaitingActiveServers) throws IOException {
+	public int shortestWaitTime(ArrayList<Integer> nonWaitingActiveServers, int currentJobSubmitTime) throws IOException {
 		
 		int shortestWaitingTimeIndex = 0;
 		
@@ -559,17 +565,36 @@ public class SocketClient {
 		
 		// ---------------------------------------------------------------------------------------------------------------------
 		
-		/**
-		 * 3. Determine which server inside of our collection has the shortest waiting time
-		 * 
-		 */
+		// NOW WHAT??????
+		
+		int shortestWaitingIndex = 0;		
+		int shortestWaitingTime = latestFinishTimes.get(0) - currentJobSubmitTime; // We will cycle through it all
+
+		// Find the server that contains the lowest waiting time
+		for (int i = 0; i < latestFinishTimes.size(); i++) {
+			
+			// Obtains the difference between the submit time of the current job 
+			if (currentJobSubmitTime < latestFinishTimes.get(i)) {
+				int estimatedWaitingTime = latestFinishTimes.get(i) - currentJobSubmitTime;
+				
+				if (estimatedWaitingTime < shortestWaitingTime) {
+					shortestWaitingIndex = i;
+					shortestWaitingTime = estimatedWaitingTime;
+				}
+			}
+			
+			else {
+				shortestWaitingIndex = i;
+			}
+			
+		}
 		
 		
 		
 		
 		// 
 		
-		return 0;
+		return nonWaitingActiveServers.get(shortestWaitingIndex);
 	}		
 	
 	
