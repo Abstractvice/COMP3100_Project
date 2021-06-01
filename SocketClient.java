@@ -341,9 +341,6 @@ public class SocketClient {
 		// Index pointing us to the optimal server stored in allServers. What we ultimately want
 		int optimalServerIndex = 0;
 
-		// 
-		boolean alreadyObtainedServer = false;
-
 		ArrayList<Integer> allIndexes = new ArrayList<>();
 
 		for (int i = 0; i < allServers.size(); i++) {
@@ -353,15 +350,12 @@ public class SocketClient {
 		// ------- Include BOOTING for latter two arrayLists. Booting is soon to be active, should be included
 		
 		// Stores the indexes pointing to ALL the servers inside allServers that are INACTIVE
-		ArrayList<Integer> inactiveServers = new ArrayList<>();
-		
+		ArrayList<Integer> inactiveServers = new ArrayList<>();	
 		// Stores the indexes pointing to ALL the servers inside allServers that are ACTIVE with ZERO waiting jobs
 		ArrayList<Integer> freeActiveServers = new ArrayList<>(); // no waiting jobs		
-		
 		// Stores the indexes pointing to ALL the servers inside allServers that are ACTIVE, not including those pointed to
 		// in the above in freeActiveServers
 		ArrayList<Integer> activeServersWithWaitingJobs = new ArrayList<>();
-		
 		// Stores the indexes pointing to ALL the servers inside allServers that are BOOTING
 		ArrayList<Integer> bootingServers = new ArrayList<>();
 		
@@ -373,9 +367,9 @@ public class SocketClient {
 
 				// Best case scenario, allocate job to first idle server if one is found, skip rest of method.
 				if (isIdle(allServers.get(i))) {
-					optimalServerIndex = i;
-					alreadyObtainedServer = true;
-					break;
+					return i;
+					//alreadyObtainedServer = true;
+					//break;
 				}
 
 				// Allocates all the inactive servers in allServers to inactiveServers ArrayList
@@ -406,27 +400,27 @@ public class SocketClient {
 		// Go through this block of code IF we haven't already obtained an idle server to schedule to.
 		// Arranged in a priority
 		// *** THIS IS THE BEST PRIORITY DO NOT CHANGE!!!!!!!!!!!!
-		if (!alreadyObtainedServer) {
 			
-			if (!freeActiveServers.isEmpty()) {
-				optimalServerIndex = shortestWaitTime(freeActiveServers, currentJob.getSubmitTime()); 
-			} 
+		if (!freeActiveServers.isEmpty()) {
+			return shortestWaitTime(freeActiveServers, currentJob.getSubmitTime()); 
+		} 
 			
 			// 
-			else if (!inactiveServers.isEmpty()) {
-				optimalServerIndex = inactiveServers.get(0); 
-			} 
+		else if (!inactiveServers.isEmpty()) {
+			return inactiveServers.get(0); 
+		} 
 			
-			else if (!activeServersWithWaitingJobs.isEmpty()) {
-				optimalServerIndex = fewestWaitingJobs(activeServersWithWaitingJobs);
-			}
+		else if (!activeServersWithWaitingJobs.isEmpty()) {
+			return fewestWaitingJobs(activeServersWithWaitingJobs);
+		}
 			
-			else if (!bootingServers.isEmpty()) {
-				optimalServerIndex = fewestWaitingJobs(bootingServers);
-			}
+		else if (!bootingServers.isEmpty()) {
+			return fewestWaitingJobs(bootingServers);
 		}
 
-		return optimalServerIndex;
+		// Goes through all the remaining servers that haven't been caught above
+		// Try and remove this, needlessly innefficient
+		return fewestWaitingJobs(allIndexes);
 
 	}
 
@@ -434,8 +428,7 @@ public class SocketClient {
 	// job is added
 	// In essence, we want to schedule our job to a server which will result in the
 	// smallest amount of waiting time being added
-	public int shortestWaitTime(ArrayList<Integer> nonWaitingActiveServers, int currentJobSubmitTime)
-			throws IOException {
+	public int shortestWaitTime(ArrayList<Integer> nonWaitingActiveServers, int currentJobSubmitTime) throws IOException {
 
 		int shortestWaitingTimeIndex = 0;
 
@@ -558,11 +551,12 @@ public class SocketClient {
 		return serverWithFewestJobs;
 	}
 
-	public boolean canFit(SocketServer server, SocketJob job) {
+	// Returns a boolean based on whether our current job object can "fit" inside a server based on required cores
+	public boolean canFit(SocketServer server, SocketJob currentJob) {
 
-		int requiredCores = job.getCore();
-		int requiredMemory = job.getMemory();
-		int requiredDiskSpace = job.getDisk();
+		int requiredCores = currentJob.getCore();
+		int requiredMemory = currentJob.getMemory();
+		int requiredDiskSpace = currentJob.getDisk();
 		int serverCores = server.getCoreCount();
 		int serverMemory = server.getMemory();
 		int serverDiskSpace = server.getDisk();
@@ -573,8 +567,7 @@ public class SocketClient {
 		return false;
 	}
 
-	// Comments will go through this process using the ds-sim protocol as a
-	// reference
+	// Comments will go through this process using the ds-sim protocol as a reference
 	public static void main(String args[]) throws IOException {
 
 		String IP = "Localhost";
