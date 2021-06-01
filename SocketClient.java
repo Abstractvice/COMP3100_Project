@@ -43,10 +43,10 @@ import org.w3c.dom.NodeList;
  * 
  * 
  * 
- * # actual simulation end time: 97359, #jobs: 980 (failed 0 times)
-   # total #servers used: 20, avg util: 94.81% (ef. usage: 94.76%), total cost: $314.18
-# avg waiting time: 1573, avg exec time: 2473, avg turnaround time: 4046
-
+ * # actual simulation end time: 97359, #jobs: 980 (failed 0 times) # total
+ * #servers used: 20, avg util: 94.81% (ef. usage: 94.76%), total cost: $314.18
+ * # avg waiting time: 1573, avg exec time: 2473, avg turnaround time: 4046
+ * 
  * 
  * 
  * 
@@ -73,15 +73,12 @@ public class SocketClient {
 	private final String JOBN = "JOBN";
 	private final String NONE = "NONE";
 
-	// Input and output byte streams
+	// Initializes input and output byte streams
 	private Socket socket;
 	private DataOutputStream out;
 	private DataInputStream in;
 
-	// Our server data, both the initial data derived from our XML as well as the
-	// updated server data
-	// given to us by ds-sim , which is updated after each job is submitted
-//	private ArrayList<SocketServer> allServersInitial = new ArrayList<SocketServer>();
+	// ArrayList that stores all of the servers being used by ds-sim, in the form of SocketServer objects
 	private ArrayList<SocketServer> allServers = new ArrayList<SocketServer>();
 
 	// SocketClient constructor
@@ -128,69 +125,7 @@ public class SocketClient {
 		return line.toString();
 	}
 
-	/*
-	 * public int fitnessValue(SocketServer server, SocketJob job) {
-	 * 
-	 * int numOfRequiredCores = job.getCore(); int serverCores =
-	 * server.getCoreCount();
-	 * 
-	 * return serverCores - numOfRequiredCores;
-	 * 
-	 * }
-	 * 
-	 * private int nextFitPointer = 0;
-	 * 
-	 * public int nextFit(SocketJob job) {
-	 * 
-	 * boolean check = false;
-	 * 
-	 * if (nextFitPointer < 0) nextFitPointer = 0;
-	 * 
-	 * int index = nextFitPointer;
-	 * 
-	 * for (int i = index; i < allServers.size(); i++) { if
-	 * (canFit(allServers.get(i), job)) { if (isServerActive(allServers.get(i))) {
-	 * index = i; check = true; break; } } if (index == allServers.size() - 1) index
-	 * = 0; }
-	 * 
-	 * if (!check) { for (int i = index; i < allServers.size(); i++) { if
-	 * (canFit(allServers.get(i), job)) { index = i; break; } if (index ==
-	 * allServers.size() - 1) index = 0; } }
-	 * 
-	 * nextFitPointer = index - 1;
-	 * 
-	 * return nextFitPointer + 1;
-	 * 
-	 * }
-	 * 
-	 * // Returns the index in our allServers arrayList of the most suitable server
-	 * // relative to this algorithm public int firstFit(SocketJob job) {
-	 * 
-	 * int index = 0;
-	 * 
-	 * boolean check = false;
-	 * 
-	 * for (int i = 0; i < allServers.size(); i++) {
-	 * 
-	 * if (canFit(allServers.get(i), job)) {
-	 * 
-	 * if (isServerActive(allServers.get(i))) { index = i; check = true; break; } }
-	 * }
-	 * 
-	 * if (!check) { for (int i = 0; i < allServers.size(); i++) { if
-	 * (canFit(allServers.get(i), job)) { index = i; break; } } }
-	 * 
-	 * return index; }
-	 * 
-	 * public boolean isServerActive(SocketServer server) { boolean result = false;
-	 * 
-	 * if (server.getServerState().equals("inactive")) result = true; if
-	 * (server.getServerState().equals("active")) result = true; if
-	 * (server.getServerState().equals("booting")) result = true;
-	 * 
-	 * return result; }
-	 */
-
+	// Will sort a collection of SocketServer objects into ascending order according to a servers number of cores
 	public void sortServers(ArrayList<SocketServer> servers) {
 
 		SocketServer temp;
@@ -204,9 +139,9 @@ public class SocketClient {
 				}
 			}
 		}
-
 	}
 
+	// Helper method that creates a single instance of a SocketJob object, parsing job information given to us by DS-SIM
 	public SocketJob getJob(String[] jobInfo) {
 		String type = jobInfo[0];
 		int submitTime = Integer.parseInt(jobInfo[1]);
@@ -219,6 +154,7 @@ public class SocketClient {
 		return new SocketJob(type, submitTime, id, estRunTime, core, memory, disk);
 	}
 
+	// Helper method that creates a single instance of a SocketServer object, parsing server information given to us by DS-SIM
 	public SocketServer getServer(String[] serverInfo) {
 		String typeS = serverInfo[0];
 		int serverID = Integer.parseInt(serverInfo[1]);
@@ -233,15 +169,22 @@ public class SocketClient {
 		return new SocketServer(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS, waitingJobs,
 				runningJobs);
 	}
+	
+	/**
+	 * 		1. Combine a few of the methods below
+	 * 		2. Include isBooting in our main body, will speed up waiting time
+	 */
 
-	public boolean noWaitingJobs(SocketServer server) {
+	// Returns a boolean based on whether a server has any waiting jobs on it
+	public boolean hasWaitingJobs(SocketServer server) {
 		boolean waitingJobs = false;
-		if (server.getWaitingJobs() == 0)
+		if (!(server.getWaitingJobs() == 0))
 			waitingJobs = true;
 
 		return waitingJobs;
 	}
 
+	// Returns a boolean based on whether a server is inactive or not
 	public boolean isInactive(SocketServer server) {
 		boolean inactive = false;
 		if (server.getServerState().equals("inactive"))
@@ -250,6 +193,7 @@ public class SocketClient {
 		return inactive;
 	}
 
+	// Returns a boolean based on whether a server is booting or not
 	public boolean isBooting(SocketServer server) {
 		boolean booting = false;
 		if (server.getServerState().equals("booting"))
@@ -258,6 +202,7 @@ public class SocketClient {
 		return booting;
 	}
 
+	// Returns a boolean based on whether a server is idle or not
 	public boolean isIdle(SocketServer server) {
 		boolean idle = false;
 		if (server.getServerState().equals("idle"))
@@ -266,6 +211,7 @@ public class SocketClient {
 		return idle;
 	}
 
+	// Returns a boolean based on whether a server is active or not
 	public boolean isActive(SocketServer server) {
 		boolean active = false;
 		if (server.getServerState().equals("active"))
@@ -274,6 +220,7 @@ public class SocketClient {
 		return active;
 	}
 
+	// Returns a boolean based on whether a server is unavailable or not (possible redundant)
 	public boolean isUnavailable(SocketServer server) {
 		boolean unavailable = false;
 		if (server.getServerState().equals("unavailable"))
@@ -285,29 +232,29 @@ public class SocketClient {
 	/**
 	 * Client Scheduler
 	 * 
-	 * JOBN submitTime jobID estRuntime cores memory disk 0 1 2 3 4 5 6
+	 * 0			1				2				3				4			5			6
 	 * 
-	 * type limit bootupTime hourlyRate coreCount memory disk 0 1 2 3 4 5 6
+	 * JOBN: 		[submitTime] 	[jobID] 		[estRuntime] 	[cores] 	[memory] 	[disk]
 	 * 
-	 * serverType serverID state curStartTime core memory disk 0 1 2 3 4 5 6
+	 * type: 		[limit] 		[bootupTime] 	[hourlyRate] 	[coreCount] [memory] 	[disk]
+	 * 
+	 * serverType: 	[serverID] 		[state] 		[curStartTime] 	[core] 		[memory] 	[disk]
 	 */
-
+	
 	public void run() throws IOException {
 
-		// Handshake and XML parsing (Steps 1 to 4)
+		// handshake
 		send(HELO);
 		receive();
 		send(AUTH);
 		receive();
-//		readXML("ds-system.xml");
 
 		send(REDY);
-		String str = receive(); // Assumes it receives either JOBN or NONE at first
+		String str = receive(); // receives JOBN or NONE at first
 
 		boolean looping = true;
 
 		while (looping) {
-			// Processing possible conditional Step 6 or Step 10
 
 			if (str.equals(NONE)) {
 				looping = false;
@@ -318,13 +265,7 @@ public class SocketClient {
 			if (str.contains(JCPL)) {
 				send(REDY);
 				str = receive();
-				// Step 7: the scheduling decision is sent to the server, based directly on
-				// ds-sim user guide
-				// specifications in section 7 on SCHD
 			}
-
-			// GETS ALL | Type serverType | Capable core memory disk | Avail core memory
-			// disk
 
 			if (str.contains(JOBN)) {
 
@@ -332,18 +273,21 @@ public class SocketClient {
 
 				SocketJob job = getJob(currentJob);
 
+				// prompts ds-sim to send us a list of capable servers
 				int coreCount = job.getCore();
 				int capableCore = job.getMemory();
 				int availCore = job.getDisk();
 				send(GETSCAPABLE + " " + coreCount + " " + capableCore + " " + availCore + "\n");
 				str = receive();
 
+				// 
 				String[] dataSplit = str.split("\\s+");
-				int numOfItems = Integer.parseInt(dataSplit[1]);
+				int numOfServers = Integer.parseInt(dataSplit[1]); // Number of capable servers (AKA limit)
 
 				send(OK);
 
-				for (int i = 0; i < numOfItems; i++) {
+				// adds all the capable servers to our allServers arrayList, as SocketServer objects.
+				for (int i = 0; i < numOfServers; i++) {
 					str = receive();
 					String[] serverState = str.split("\\s+");
 
@@ -351,39 +295,32 @@ public class SocketClient {
 
 				}
 
-				sortServers(allServers); // Likely Works?
+				// Ascending order by coreCount
+				sortServers(allServers);
 
 				send(OK);
 
-				str = receive(); // likely to contain "."
+				str = receive(); // contains "."
 
-				// int firstFit = firstFit(job); // Seems to work??????????? Should be TINY
-				// int nextFit = nextFit(job);
 				int optimalFit = optimalFit(job);
 
-				// _____________________________________________________________________________________________________________________
-
 				int jobID = Integer.parseInt(currentJob[2]);
-				String serverType = allServers.get(optimalFit).getType(); // What we need to manipulate
+				String serverType = allServers.get(optimalFit).getType();
 				int serverID = allServers.get(optimalFit).getServerID();
 
 				send(SCHD + " " + jobID + " " + serverType + " " + serverID + "\n");
 
-				str = receive(); // Step 8: Server sends OK for job scheduled
-				// send("QUIT\n");
-				send(REDY); // Step 9(5): Client assumes there are more jobs, so sends "REDY"
-				str = receive(); // Step 10
+				str = receive();
+				send(REDY);
+				str = receive();
 
 				allServers.clear();
 			}
 
 		}
 
-		// Step 11 contained within the loop but too abstracted to be pointed out
-		// specifically
-
-		send(QUIT); // Step 12
-		receive(); // Step 13
+		send(QUIT); 
+		receive(); 
 		out.close();
 		socket.close();
 
@@ -392,84 +329,102 @@ public class SocketClient {
 	/**
 	 * Basic algorithm idea: Prioritise in the following order:
 	 * 
-	 * 1. Inactive servers: immediately available with no running jobs, pick first
-	 * so they can boot and then go idle 
-	 * 2. Idle servers: immediately available with
-	 * no running jobs 
-	 * 3. Active servers: possibly available 3.1. Store the active
-	 * servers with NO waiting jobs 3.2. Store the active servers WITH waiting jobs
-	 * in separate storagehe one that has the SMALLEST WAIT TIME
-	 * 
-	 * Add later: server with waiting jobs, t
-	 * 
-	 * page 14
-	 * 
-	 * @throws IOException
+	 * 		1. Inactive servers: immediately available with no running jobs, pick first so they can boot and then go idle 
+	 *      2. Idle servers: immediately available with no running jobs 
+	 *      3. Active servers: possibly available 
+	 *      	3.1. Store the active servers with NO waiting jobs 
+	 *      	3.2. Store the active servers WITH waiting jobs in separate storage, one that has the SMALLEST WAIT TIME
 	 * 
 	 */
-	public int optimalFit(SocketJob job) throws IOException {
+	public int optimalFit(SocketJob currentJob) throws IOException {
 
+		// Index pointing us to the optimal server stored in allServers. What we ultimately want
 		int optimalServerIndex = 0;
 
+		// 
 		boolean alreadyObtainedServer = false;
 
 		ArrayList<Integer> allIndexes = new ArrayList<>();
-		
+
 		for (int i = 0; i < allServers.size(); i++) {
 			allIndexes.add(i);
 		}
 
+		// ------- Include BOOTING for latter two arrayLists. Booting is soon to be active, should be included
+		
+		// Stores the indexes pointing to ALL the servers inside allServers that are INACTIVE
 		ArrayList<Integer> inactiveServers = new ArrayList<>();
-		ArrayList<Integer> nonWaitingActiveServers = new ArrayList<>(); // no waiting jobs
-		ArrayList<Integer> activeServers = new ArrayList<>();
-
+		
+		// Stores the indexes pointing to ALL the servers inside allServers that are ACTIVE with ZERO waiting jobs
+		ArrayList<Integer> freeActiveServers = new ArrayList<>(); // no waiting jobs		
+		
+		// Stores the indexes pointing to ALL the servers inside allServers that are ACTIVE, not including those pointed to
+		// in the above in freeActiveServers
+		ArrayList<Integer> activeServersWithWaitingJobs = new ArrayList<>();
+		
+		// Stores the indexes pointing to ALL the servers inside allServers that are BOOTING
+		ArrayList<Integer> bootingServers = new ArrayList<>();
+		
+		// Iterates through every server inside allServers, and allocates them to the above ArrayLists
 		for (int i = 0; i < allServers.size(); i++) {
-			// best case scenario, if true just use this one
-			if (canFit(allServers.get(i), job)) {
+			
+			// Ensures that the servers to be allocated at least can fit currentJob
+			if (canFit(allServers.get(i), currentJob)) {
 
+				// Best case scenario, allocate job to first idle server if one is found, skip rest of method.
 				if (isIdle(allServers.get(i))) {
 					optimalServerIndex = i;
 					alreadyObtainedServer = true;
 					break;
 				}
 
-				// Next best thing, but must boot
+				// Allocates all the inactive servers in allServers to inactiveServers ArrayList
 				if (isInactive(allServers.get(i))) {
 					inactiveServers.add(i);
 				}
 
+				// Allocates active servers of two different kinds
 				if (isActive(allServers.get(i))) {
-					// Store all active servers with no waiting jobs
-					if (noWaitingJobs(allServers.get(i))) {
-						nonWaitingActiveServers.add(i);
+					// Allocates all of our active servers with NO waiting jobs to nonWaitingActiveServers arrayList
+					if (!hasWaitingJobs(allServers.get(i))) {
+						freeActiveServers.add(i);
 					}
-					// Stores the rest of the active servers, the ones with waiting jobs
+					// Stores the remaining active servers, the ones with at least one waiting job
 					else {
-						activeServers.add(i);
+						activeServersWithWaitingJobs.add(i);
 					}
 
+				}
+				
+				//Allocates booting servers to bootingServers ArrayList
+				if (isBooting(allServers.get(i))) {
+					bootingServers.add(i);
 				}
 			}
 		}
 
+		// Go through this block of code IF we haven't already obtained an idle server to schedule to.
+		// Arranged in a priority
+		// *** THIS IS THE BEST PRIORITY DO NOT CHANGE!!!!!!!!!!!!
 		if (!alreadyObtainedServer) {
-			//
-			// do this one last
-			if (!nonWaitingActiveServers.isEmpty()) {
-				optimalServerIndex = shortestWaitTime(nonWaitingActiveServers, job.getSubmitTime()); // Finds the ACTIVE
-																										// server with
-																										// the SHORTEST
-																										// wait time
-			} else if (!inactiveServers.isEmpty()) {
-				optimalServerIndex = inactiveServers.get(0); // Finds the SMALLEST server to schedule to, remember we
-																// have sorted allServers into ascending order
-			} else if (!activeServers.isEmpty()) {
-				optimalServerIndex = fewestWaitingJobs(activeServers);// returns the active server with the FEWEST
-																		// waiting jobs. Worst case scenario
+			
+			if (!freeActiveServers.isEmpty()) {
+				optimalServerIndex = shortestWaitTime(freeActiveServers, currentJob.getSubmitTime()); 
+			} 
+			
+			// 
+			else if (!inactiveServers.isEmpty()) {
+				optimalServerIndex = inactiveServers.get(0); 
+			} 
+			
+			else if (!activeServersWithWaitingJobs.isEmpty()) {
+				optimalServerIndex = fewestWaitingJobs(activeServersWithWaitingJobs);
+			}
+			
+			else if (!bootingServers.isEmpty()) {
+				optimalServerIndex = fewestWaitingJobs(bootingServers);
 			}
 		}
-
-		optimalServerIndex = fewestWaitingJobs(allIndexes);
 
 		return optimalServerIndex;
 
@@ -587,14 +542,14 @@ public class SocketClient {
 	}
 
 	public int fewestWaitingJobs(ArrayList<Integer> activeServers) {
-		
+
 		int serverWithFewestJobs = activeServers.get(0); // Final index, the server with the fewest waiting job
-		int minWaitingJobs = allServers.get(activeServers.get(0)).getWaitingJobs(); // 
+		int minWaitingJobs = allServers.get(activeServers.get(0)).getWaitingJobs(); //
 
 		for (int i = 0; i < activeServers.size(); i++) {
-			
+
 			int currentWaitingJobs = allServers.get(activeServers.get(i)).getWaitingJobs();
-			
+
 			if (currentWaitingJobs < minWaitingJobs) {
 				serverWithFewestJobs = activeServers.get(i);
 				minWaitingJobs = allServers.get(activeServers.get(i)).getWaitingJobs(); //
