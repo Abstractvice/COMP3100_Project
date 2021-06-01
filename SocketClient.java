@@ -405,6 +405,8 @@ public class SocketClient {
 
 	}
 	
+	
+	
 	/**
 	 * Basic algorithm idea: Prioritise in the following order:
 	 * 
@@ -463,7 +465,7 @@ public class SocketClient {
 		// 
 			// do this one last
 			if (!nonWaitingActiveServers.isEmpty()) {
-				optimalServerIndex = shortestWaitTime(job); // Finds the ACTIVE server with the SHORTEST wait time
+				optimalServerIndex = shortestWaitTime(nonWaitingActiveServers); // Finds the ACTIVE server with the SHORTEST wait time
 			}
 			else if (!inactiveServers.isEmpty()) {
 				optimalServerIndex = inactiveServers.get(0); // Finds the SMALLEST server to schedule to, remember we have sorted allServers into ascending order
@@ -479,6 +481,86 @@ public class SocketClient {
 		
 	}
 	
+	
+	// index of the server with shortest ESTIMATED waiting time if a potential new job is added
+	// In essence, we want to schedule our job to a server which will result in the smallest amount of waiting time being added
+	public int shortestWaitTime(ArrayList<Integer> nonWaitingActiveServers) throws IOException {
+		
+		int shortestWaitingTimeIndex = 0;
+		
+		for (int i = 0; i < nonWaitingActiveServers.size(); i++) {
+			
+			/**
+			 *  1. Collect a list of all the RUNNING JOBS over each iteration
+			 *  	1.1. Use LSTJ command
+			 *  2. Find job with the latest estimated completion time - may need 2 FOR loops
+			 */
+			
+			String serverType = allServers.get(nonWaitingActiveServers.get(i)).getType();
+			int serverID = allServers.get(nonWaitingActiveServers.get(i)).getServerID();
+			
+			// ---------------------------------- Finding our running jobs on iterated server ------------------------------------------------
+			
+			send(LSTJ + " " + serverType + " " + serverID + "\n");
+			
+			String str = receive();
+
+			send(OK);
+
+			
+			
+			ArrayList<int[]> activeJobs = new ArrayList<>();
+
+			str = receive();
+			
+			while (!(str.equals("."))) {
+				
+				String[] jobData = str.split(" ");
+				
+				// has our estimated start-time and estimated run-time, as aligned in ds-sim user guide
+				int[] temp = {Integer.parseInt(jobData[2]), Integer.parseInt(jobData[3])};
+						
+						
+				activeJobs.add(temp);
+				
+				send(OK);
+				
+				str = receive();
+			}
+			
+			// -------------------------------------------------------------------------------------------------------------
+			
+		}
+		
+		/**
+		 * 3. Determine which server inside of our collection has the shortest waiting time
+		 * 
+		 */
+		
+		
+		
+		
+		// 
+		
+		return 0;
+	}		
+	
+	
+	
+	
+	
+
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	public int fewestWaitingJobs(ArrayList<Integer> activeServers) {
 		
 		int fewest = activeServers.get(0);
@@ -491,12 +573,7 @@ public class SocketClient {
 		return fewest;
 	}	
 	
-	public int shortestWaitTime(SocketJob job) {
-			
-		
-		return 0;
-		
-	}
+
 	
 
 	
