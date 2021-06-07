@@ -3,66 +3,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.io.File;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-/**
- * 
- *  hello
- * ./test_results "java SocketClient" -o tt -n -c /home/luigiv/Documents/COMP3100/Testing/configs/other
- * 
- * ./ds-server -c config20-long-high.xml -v all -n
- * 
- * ./ds-server -c config100-short-low.xml -v all -n
- * ./ds-server -c config20-long-low.xml -v all -n
- * ./ds-server -c ds-sample-config01.xml -v all -n
- * ./ds-server -c ds-config01-wk9.xml -v all -n        -i
- *
- * ./ds-server -c ds-sample-config01.xml -v all -n
- * ./ds-server -i -c ds-sim.xml -v all
- * 
- * python3 ./ds_viz.py ./ds-config01--wk9.xml ./worstFit.xml.log -c 10 -s 2
- * python3 ./ds_viz.py ./ds-S1-config02--demo.xml ./worstFit.xml.log -c 10 -s 2
- *
- *	Things to do
- *		- Change byte usage (e.g. s.getBytes(), use something else)
- *		- Spread out classes into different files
- *
- */
-
-/**
- * Things to do: - Implement either a firstFit or roundRobin scheduler
- *
- *
- * Try something else!!!!
- * 
- * 
- * 
- * # actual simulation end time: 97359, #jobs: 980 (failed 0 times) # total
- * #servers used: 20, avg util: 94.81% (ef. usage: 94.76%), total cost: $314.18
- * # avg waiting time: 1573, avg exec time: 2473, avg turnaround time: 4046
- * 
- * ./demoS2Final "java SocketClient" -o tt -n -c /home/luigiv/Documents/COMP3100/Assignment_2/S2DemoConfigs
- * ./test_results "java SocketClient" -o tt -n -c /home/luigiv/Documents/COMP3100/Assignment_2/configs/other
- * ./ds-server -c config20-long-high.xml -v all -n
- * 
- * ./ds-server -c config100-short-high.xml -v all -n
- * 
- * config100-short-high.xml
- * 
- */
 
 public class SocketClient {
 
 	// Initialises all the relevant commands that ds-sim responds to
 	private final String AUTH = "AUTH " + System.getProperty("user.name") + "\n";
-	private final String CNTJ = "CNTJ";
-	private final String GETSALL = "GETS All";
 	private final String GETSCAPABLE = "GETS Capable";
 	private final String HELO = "HELO\n";
 	private final String LSTJ = "LSTJ\n";
