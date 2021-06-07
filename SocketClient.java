@@ -3,63 +3,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.io.File;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-/**
- * 
- *  hello
- * ./test_results "java SocketClient" -o tt -n -c /home/luigiv/Documents/COMP3100/Testing/configs/other
- * 
- * ./ds-server -c config20-long-high.xml -v all -n
- * 
- * ./ds-server -c config100-short-low.xml -v all -n
- * ./ds-server -c config20-long-low.xml -v all -n
- * ./ds-server -c ds-sample-config01.xml -v all -n
- * ./ds-server -c ds-config01--wk9.xml -v all -n        -i
- *
- * ./ds-server -c ds-sample-config01.xml -v all -n
- * ./ds-server -i -c ds-sim.xml -v all
- * 
- * python3 ./ds_viz.py ./ds-config01--wk9.xml ./worstFit.xml.log -c 10 -s 2
- * python3 ./ds_viz.py ./ds-S1-config02--demo.xml ./worstFit.xml.log -c 10 -s 2
- *
- *	Things to do
- *		- Change byte usage (e.g. s.getBytes(), use something else)
- *		- Spread out classes into different files
- *
- */
-
-/**
- * Things to do: - Implement either a firstFit or roundRobin scheduler
- *
- *
- * Try something else!!!!
- * 
- * 
- * 
- * # actual simulation end time: 97359, #jobs: 980 (failed 0 times) # total
- * #servers used: 20, avg util: 94.81% (ef. usage: 94.76%), total cost: $314.18
- * # avg waiting time: 1573, avg exec time: 2473, avg turnaround time: 4046
- * 
- * 
- * 
- * 
- * 
- * 
- */
 
 public class SocketClient {
 
 	// Initialises all the relevant commands that ds-sim responds to
 	private final String AUTH = "AUTH " + System.getProperty("user.name") + "\n";
-	private final String CNTJ = "CNTJ";
-	private final String GETSALL = "GETS All";
 	private final String GETSCAPABLE = "GETS Capable";
 	private final String HELO = "HELO\n";
 	private final String LSTJ = "LSTJ\n";
@@ -116,9 +64,8 @@ public class SocketClient {
 		int newLine;
 		line = new StringBuilder();
 
-		while ((newLine = in.read()) != '\n') { // loop stops when newline is encountered, defined here in ASCII
+		while ((newLine = in.read()) != '\n') // loop stops when newline is encountered, defined here in ASCII
 			line.append((char) newLine);
-		}
 
 		System.out.println("Message received: " + line);
 
@@ -169,11 +116,6 @@ public class SocketClient {
 		return new SocketServer(typeS, serverID, state, currStartTime, coreCountS, memoryS, diskS, waitingJobs,
 				runningJobs);
 	}
-	
-	/**
-	 * 		1. Combine a few of the methods below
-	 * 		2. Include isBooting in our main body, will speed up waiting time
-	 */
 
 	// Returns a boolean based on whether a server has any waiting jobs on it
 	public boolean hasWaitingJobs(SocketServer server) {
@@ -218,15 +160,6 @@ public class SocketClient {
 			active = true;
 
 		return active;
-	}
-
-	// Returns a boolean based on whether a server is unavailable or not (possible redundant)
-	public boolean isUnavailable(SocketServer server) {
-		boolean unavailable = false;
-		if (server.getServerState().equals("unavailable"))
-			unavailable = true;
-
-		return unavailable;
 	}
 
 	/**
@@ -302,7 +235,7 @@ public class SocketClient {
 
 				str = receive(); // contains "."
 
-				int optimalFit = optimalFit(job);
+				int optimalFit = priorityScheduler(job);
 
 				int jobID = Integer.parseInt(currentJob[2]);
 				String serverType = allServers.get(optimalFit).getType();
@@ -325,39 +258,20 @@ public class SocketClient {
 		socket.close();
 
 	}
+	
 
-	/**
-	 * Basic algorithm idea: Prioritise in the following order:
-	 * 
-	 * 		1. Inactive servers: immediately available with no running jobs, pick first so they can boot and then go idle 
-	 *      2. Idle servers: immediately available with no running jobs 
-	 *      3. Active servers: possibly available 
-	 *      	3.1. Store the active servers with NO waiting jobs 
-	 *      	3.2. Store the active servers WITH waiting jobs in separate storage, one that has the SMALLEST WAIT TIME
-	 * 
-	 */
-	public int optimalFit(SocketJob currentJob) throws IOException {
+	public int priorityScheduler(SocketJob currentJob) throws IOException {
 
 		// Index pointing us to the optimal server stored in allServers. What we ultimately want
-		int optimalServerIndex = 0;
-
 		ArrayList<Integer> allIndexes = new ArrayList<>();
 
-		for (int i = 0; i < allServers.size(); i++) {
+		for (int i = 0; i < allServers.size(); i++)
 			allIndexes.add(i);
-		}
-
-		// ------- Include BOOTING for latter two arrayLists. Booting is soon to be active, should be included
 		
-		// Stores the indexes pointing to ALL the servers inside allServers that are INACTIVE
+		// Stores the indexes pointing to ALL the servers inside allServers that are of a particular state and/or containing waiting jobs
 		ArrayList<Integer> inactiveServers = new ArrayList<>();	
-		// Stores the indexes pointing to ALL the servers inside allServers that are ACTIVE with ZERO waiting jobs
 		ArrayList<Integer> freeActiveServers = new ArrayList<>(); // no waiting jobs		
-		// Stores the indexes pointing to ALL the servers inside allServers that are ACTIVE, not including those pointed to
-		// in the above in freeActiveServers
 		ArrayList<Integer> activeServersWithWaitingJobs = new ArrayList<>();
-		// Stores the indexes pointing to ALL the servers inside allServers that are BOOTING
-		ArrayList<Integer> bootingServers = new ArrayList<>();
 		
 		// Iterates through every server inside allServers, and allocates them to the above ArrayLists
 		for (int i = 0; i < allServers.size(); i++) {
@@ -366,132 +280,83 @@ public class SocketClient {
 			if (canFit(allServers.get(i), currentJob)) {
 
 				// Best case scenario, allocate job to first idle server if one is found, skip rest of method.
-				if (isIdle(allServers.get(i))) {
+				if (isIdle(allServers.get(i)))
 					return i;
-					//alreadyObtainedServer = true;
-					//break;
-				}
 
 				// Allocates all the inactive servers in allServers to inactiveServers ArrayList
-				if (isInactive(allServers.get(i))) {
+				if (isInactive(allServers.get(i)))
 					inactiveServers.add(i);
-				}
 
 				// Allocates active servers of two different kinds
-				if (isActive(allServers.get(i))) {
+				if (isActive(allServers.get(i)) || isBooting(allServers.get(i))) {
 					// Allocates all of our active servers with NO waiting jobs to nonWaitingActiveServers arrayList
-					if (!hasWaitingJobs(allServers.get(i))) {
+					if (!hasWaitingJobs(allServers.get(i)))
 						freeActiveServers.add(i);
-					}
 					// Stores the remaining active servers, the ones with at least one waiting job
-					else {
+					else
 						activeServersWithWaitingJobs.add(i);
-					}
-
 				}
 				
-				//Allocates booting servers to bootingServers ArrayList
-				if (isBooting(allServers.get(i))) {
-					bootingServers.add(i);
-				}
 			}
 		}
 
-		// Go through this block of code IF we haven't already obtained an idle server to schedule to.
-		// Arranged in a priority
-		// *** THIS IS THE BEST PRIORITY DO NOT CHANGE!!!!!!!!!!!!
+		int currentJobSubmitTime = currentJob.getSubmitTime();
+		
+		// Go through this block of code IF we haven't already obtained an idle server to schedule to.		
+		
+		if (!freeActiveServers.isEmpty())
+			return closestToFinish(freeActiveServers, currentJobSubmitTime); 
 			
-		if (!freeActiveServers.isEmpty()) {
-			return shortestWaitTime(freeActiveServers, currentJob.getSubmitTime()); 
-		} 
-			
-			// 
-		else if (!inactiveServers.isEmpty()) {
+		if (!inactiveServers.isEmpty())
 			return inactiveServers.get(0); 
-		} 
 			
-		else if (!activeServersWithWaitingJobs.isEmpty()) {
+		if (!activeServersWithWaitingJobs.isEmpty())
 			return fewestWaitingJobs(activeServersWithWaitingJobs);
-		}
-			
-		else if (!bootingServers.isEmpty()) {
-			return fewestWaitingJobs(bootingServers);
-		}
-
-		// Goes through all the remaining servers that haven't been caught above
-		// Try and remove this, needlessly innefficient
+		
+		// We are missing at least one case, this wouldn't be necessary otherwise, and would improve the program if dealt with
 		return fewestWaitingJobs(allIndexes);
 
 	}
 
-	// index of the server with shortest ESTIMATED waiting time if a potential new
-	// job is added
-	// In essence, we want to schedule our job to a server which will result in the
-	// smallest amount of waiting time being added
-	public int shortestWaitTime(ArrayList<Integer> nonWaitingActiveServers, int currentJobSubmitTime) throws IOException {
+	// index of the server with the smallest difference between the submit time of our current job and the latest finish time out of all
+	// the potential jobs running overall
+	public int closestToFinish(ArrayList<Integer> freeServers, int currentJobSubmitTime) throws IOException {
 
-		int shortestWaitingTimeIndex = 0;
-
-		// ------------------------------------------------------------------------------------------------------------
-
-		// Here, we need to obtain a collection of all the running jobs in the current
-		// server (per iteration)
-		// Aligned with nonWaitingActiveServers index, contains the LATEST possible
-		// finish time for any given job in each server
+		// Here, we need to obtain a collection of all the running jobs in the current server (per iteration)
+		// Aligned with freeServers index, contains the LATEST possible finish time for any given job in each server
 		ArrayList<Integer> latestFinishTimes = new ArrayList<>();
 
-		for (int i = 0; i < nonWaitingActiveServers.size(); i++) {
+		for (int i = 0; i < freeServers.size(); i++) {
 
-			/**
-			 * 1. Collect a list of all the RUNNING JOBS over each iteration 1.1. Use LSTJ
-			 * command 2. Find job with the latest estimated completion time - may need 2
-			 * FOR loops
-			 */
-
-			String serverType = allServers.get(nonWaitingActiveServers.get(i)).getType();
-
-			int serverID = allServers.get(nonWaitingActiveServers.get(i)).getServerID();
-
-			// ---------------------------------- Finding our running jobs on iterated
-			// server ------------------------------------------------
-
+			String serverType = allServers.get(freeServers.get(i)).getType();
+			int serverID = allServers.get(freeServers.get(i)).getServerID();
 			send(LSTJ + " " + serverType + " " + serverID + "\n");
 
-			String str = receive();
+			String str = receive(); 
 
 			send(OK);
 
-			ArrayList<int[]> activeJobs = new ArrayList<>();
+			str = receive(); // [jobID] [jobState] [startTime] [estRunTime] [core] [memory] [disk]
+			
+			ArrayList<int[]> activeJobs = new ArrayList<>();			
 
-			str = receive();
-
+			// go through every LSTJ request until we have no more running jobs
 			while (!(str.equals("."))) {
-
+				
 				String[] jobData = str.split(" ");
-
-				// has our estimated start-time and estimated run-time, as aligned in ds-sim
-				// user guide
-				// - [2] = job start time
-				// - [3] = estimated job run time
-				int[] temp = { Integer.parseInt(jobData[2]), Integer.parseInt(jobData[3]) };
-
+				int[] temp = {Integer.parseInt(jobData[2]), Integer.parseInt(jobData[3])};
 				activeJobs.add(temp);
-
 				send(OK);
-
 				str = receive();
+				
 			}
 
-			// -------------------------------Finding latest completion time---------------
-
+			// Here we find which element of temp has the latest completion time
 			int latestFinishTime = 0;
-
 			for (int j = 0; j < activeJobs.size(); j++) {
 
-				// Checks to see if the estimated run time ([0] + [1]) is greater than
-				// finishTime
+				// Checks to see if the estimated run time ([0] + [1]) is greater than finishTime
 				int currentFinishTime = activeJobs.get(j)[0] + activeJobs.get(j)[1];
-
 				if (currentFinishTime > latestFinishTime)
 					latestFinishTime = currentFinishTime;
 
@@ -499,45 +364,34 @@ public class SocketClient {
 
 			latestFinishTimes.add(latestFinishTime);
 
-			//
-
 		}
 
-		// ---------------------------------------------------------------------------------------------------------------------
+		int closestToLatestIndex = 0;
+		int closestToLatest = latestFinishTimes.get(0) - currentJobSubmitTime;
 
-		// NOW WHAT??????
-
-		int shortestWaitingIndex = 0;
-		int shortestWaitingTime = latestFinishTimes.get(0) - currentJobSubmitTime; // We will cycle through it all
-
-		// Find the server that contains the lowest waiting time
+		// We want to find which server, with the currentJob scheduled to it, results in the submit time of currentJob being closest to
+		// the latest finish time of the running jobs in the server
 		for (int i = 0; i < latestFinishTimes.size(); i++) {
 
-			// Obtains the difference between the submit time of the current job
 			if (currentJobSubmitTime < latestFinishTimes.get(i)) {
 				int estimatedWaitingTime = latestFinishTimes.get(i) - currentJobSubmitTime;
 
-				if (estimatedWaitingTime < shortestWaitingTime) {
-					shortestWaitingIndex = i;
-					shortestWaitingTime = estimatedWaitingTime;
+				if (estimatedWaitingTime < closestToLatest) {
+					closestToLatest = i;
+					closestToLatest = estimatedWaitingTime;
 				}
-			}
-
-			else {
-				shortestWaitingIndex = i;
 			}
 
 		}
 
-		//
-
-		return nonWaitingActiveServers.get(shortestWaitingIndex);
+		return freeServers.get(closestToLatestIndex);
 	}
 
+	// Simply returns the index of the server that contains the fewest number of waiting jobs
 	public int fewestWaitingJobs(ArrayList<Integer> activeServers) {
 
-		int serverWithFewestJobs = activeServers.get(0); // Final index, the server with the fewest waiting job
-		int minWaitingJobs = allServers.get(activeServers.get(0)).getWaitingJobs(); //
+		int serverWithFewestJobs = activeServers.get(0); 
+		int minWaitingJobs = allServers.get(activeServers.get(0)).getWaitingJobs();
 
 		for (int i = 0; i < activeServers.size(); i++) {
 
@@ -545,7 +399,7 @@ public class SocketClient {
 
 			if (currentWaitingJobs < minWaitingJobs) {
 				serverWithFewestJobs = activeServers.get(i);
-				minWaitingJobs = allServers.get(activeServers.get(i)).getWaitingJobs(); //
+				minWaitingJobs = allServers.get(activeServers.get(i)).getWaitingJobs();
 			}
 		}
 		return serverWithFewestJobs;
