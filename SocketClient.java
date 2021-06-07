@@ -3,11 +3,66 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.io.File;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+/**
+ * 
+ *  hello
+ * ./test_results "java SocketClient" -o tt -n -c /home/luigiv/Documents/COMP3100/Testing/configs/other
+ * 
+ * ./ds-server -c config20-long-high.xml -v all -n
+ * 
+ * ./ds-server -c config100-short-low.xml -v all -n
+ * ./ds-server -c config20-long-low.xml -v all -n
+ * ./ds-server -c ds-sample-config01.xml -v all -n
+ * ./ds-server -c ds-config01-wk9.xml -v all -n        -i
+ *
+ * ./ds-server -c ds-sample-config01.xml -v all -n
+ * ./ds-server -i -c ds-sim.xml -v all
+ * 
+ * python3 ./ds_viz.py ./ds-config01--wk9.xml ./worstFit.xml.log -c 10 -s 2
+ * python3 ./ds_viz.py ./ds-S1-config02--demo.xml ./worstFit.xml.log -c 10 -s 2
+ *
+ *	Things to do
+ *		- Change byte usage (e.g. s.getBytes(), use something else)
+ *		- Spread out classes into different files
+ *
+ */
+
+/**
+ * Things to do: - Implement either a firstFit or roundRobin scheduler
+ *
+ *
+ * Try something else!!!!
+ * 
+ * 
+ * 
+ * # actual simulation end time: 97359, #jobs: 980 (failed 0 times) # total
+ * #servers used: 20, avg util: 94.81% (ef. usage: 94.76%), total cost: $314.18
+ * # avg waiting time: 1573, avg exec time: 2473, avg turnaround time: 4046
+ * 
+ * ./demoS2Final "java SocketClient" -o tt -n -c /home/luigiv/Documents/COMP3100/Assignment_2/S2DemoConfigs
+ * ./test_results "java SocketClient" -o tt -n -c /home/luigiv/Documents/COMP3100/Assignment_2/configs/other
+ * ./ds-server -c config20-long-high.xml -v all -n
+ * 
+ * ./ds-server -c config100-short-high.xml -v all -n
+ * 
+ * config100-short-high.xml
+ * 
+ */
 
 public class SocketClient {
 
 	// Initialises all the relevant commands that ds-sim responds to
 	private final String AUTH = "AUTH " + System.getProperty("user.name") + "\n";
+	private final String CNTJ = "CNTJ";
+	private final String GETSALL = "GETS All";
 	private final String GETSCAPABLE = "GETS Capable";
 	private final String HELO = "HELO\n";
 	private final String LSTJ = "LSTJ\n";
@@ -125,41 +180,9 @@ public class SocketClient {
 
 		return waitingJobs;
 	}
-
-	// Returns a boolean based on whether a server is inactive or not
-	public boolean isInactive(SocketServer server) {
-		boolean inactive = false;
-		if (server.getServerState().equals("inactive"))
-			inactive = true;
-
-		return inactive;
-	}
-
-	// Returns a boolean based on whether a server is booting or not
-	public boolean isBooting(SocketServer server) {
-		boolean booting = false;
-		if (server.getServerState().equals("booting"))
-			booting = true;
-
-		return booting;
-	}
-
-	// Returns a boolean based on whether a server is idle or not
-	public boolean isIdle(SocketServer server) {
-		boolean idle = false;
-		if (server.getServerState().equals("idle"))
-			idle = true;
-
-		return idle;
-	}
-
-	// Returns a boolean based on whether a server is active or not
-	public boolean isActive(SocketServer server) {
-		boolean active = false;
-		if (server.getServerState().equals("active"))
-			active = true;
-
-		return active;
+	
+	public String serverState(SocketServer server) {
+		return server.getServerState();
 	}
 
 	/**
@@ -278,17 +301,19 @@ public class SocketClient {
 			
 			// Ensures that the servers to be allocated at least can fit currentJob
 			if (canFit(allServers.get(i), currentJob)) {
+				
+				String state = serverState(allServers.get(i));
 
 				// Best case scenario, allocate job to first idle server if one is found, skip rest of method.
-				if (isIdle(allServers.get(i)))
+				if (state.equals("idle"))
 					return i;
 
 				// Allocates all the inactive servers in allServers to inactiveServers ArrayList
-				if (isInactive(allServers.get(i)))
+				if (state.equals("inactive"))
 					inactiveServers.add(i);
 
 				// Allocates active servers of two different kinds
-				if (isActive(allServers.get(i)) || isBooting(allServers.get(i))) {
+				if (state.equals("active") || state.equals("booting")) {
 					// Allocates all of our active servers with NO waiting jobs to nonWaitingActiveServers arrayList
 					if (!hasWaitingJobs(allServers.get(i)))
 						freeActiveServers.add(i);
